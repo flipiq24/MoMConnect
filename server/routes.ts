@@ -1,0 +1,198 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertPropertySchema, updatePropertySchema } from "@shared/schema";
+import { calculateTotalScore, getEMDRecommendation } from "@shared/scoring";
+import { savePropertyToSheet } from "./lib/googleSheets";
+import { generatePropertyAnalysis } from "./lib/openai";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Get user by email (or create if doesn't exist)
+  app.post("/api/users/login", async (req, res) => {
+    try {
+      const { name, email } = req.body;
+      
+      if (!name || !email) {
+        return res.status(400).json({ error: "Name and email are required" });
+      }
+
+      let user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        user = await storage.createUser({ name, email });
+      }
+
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create property
+  app.post("/api/properties", async (req, res) => {
+    try {
+      const validatedData = insertPropertySchema.parse(req.body);
+      
+      // Calculate score and EMD recommendation
+      const totalScore = calculateTotalScore(validatedData);
+      const emdRecommendation = getEMDRecommendation(totalScore);
+      
+      const propertyWithScore = {
+        ...validatedData,
+        totalScore,
+        emdRecommendation: emdRecommendation.emd,
+        successChance: emdRecommendation.chance
+      };
+
+      const property = await storage.createProperty(propertyWithScore);
+      res.json(property);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Update property
+  app.patch("/api/properties/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = updatePropertySchema.parse({ ...req.body, id });
+      
+      // Recalculate score if risk assessment fields changed
+      const totalScore = calculateTotalScore(validatedData);
+      const emdRecommendation = getEMDRecommendation(totalScore);
+      
+      const propertyWithScore = {
+        ...validatedData,
+        totalScore,
+        emdRecommendation: emdRecommendation.emd,
+        successChance: emdRecommendation.chance
+      };
+
+      const property = await storage.updateProperty(id, propertyWithScore);
+      res.json(property);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Get property by ID
+  app.get("/api/properties/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ error: "Property not found" });
+      }
+
+      res.json(property);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get most recent property for a user
+  app.get("/api/users/:email/recent-property", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const user = await storage.getUserByEmail(email);
+      
+      if (!user) {
+        return res.json(null);
+      }
+
+      const properties = await storage.getPropertiesByUserId(user.id);
+      
+      if (properties.length === 0) {
+        return res.json(null);
+      }
+
+      // Return most recently updated property
+      const sortedProperties = properties.sort((a, b) => 
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      );
+
+      res.json(sortedProperties[0]);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Save property to Google Sheets
+  app.post("/api/properties/:id/save-to-sheets", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ error: "Property not found" });
+      }
+
+      const result = await savePropertyToSheet(property);
+      res.json(result);
+    } catch (error: any) {
+      console.error('Google Sheets save error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Generate AI analysis
+  app.post("/api/properties/:id/analyze", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const property = await storage.getProperty(id);
+      
+      if (!property) {
+        return res.status(404).json({ error: "Property not found" });
+      }
+
+      const totalScore = property.totalScore || 0;
+      const emdRecommendation = getEMDRecommendation(totalScore);
+
+      const analysis = await generatePropertyAnalysis(property, totalScore, emdRecommendation);
+      
+      // Update property with AI analysis
+      const updatedProperty = await storage.updateProperty(id, {
+        ...property,
+        aiAnalysis: analysis
+      });
+
+      res.json(analysis);
+    } catch (error: any) {
+      console.error('AI analysis error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Fetch mock Zillow data
+  app.post("/api/properties/zillow", async (req, res) => {
+    try {
+      const { address } = req.body;
+      
+      if (!address) {
+        return res.status(400).json({ error: "Address is required" });
+      }
+
+      // Mock Zillow data
+      const mockData = {
+        address: address,
+        zpid: Math.random().toString(36).substring(7),
+        price: Math.floor(Math.random() * 500000) + 500000,
+        bedrooms: Math.floor(Math.random() * 3) + 2,
+        bathrooms: Math.floor(Math.random() * 2) + 1.5,
+        sqft: Math.floor(Math.random() * 1000) + 1500,
+        lotSize: Math.floor(Math.random() * 5000) + 5000,
+        yearBuilt: Math.floor(Math.random() * 40) + 1970,
+        zestimate: Math.floor(Math.random() * 600000) + 600000
+      };
+
+      res.json(mockData);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
