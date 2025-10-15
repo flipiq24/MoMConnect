@@ -1,12 +1,19 @@
 import { EMDRecommendation, ScoringRules } from "./schema";
 
-// EXACT scoring rules from the MoM system
+// EXACT scoring rules from the MoM system design
 export const scoringRules: ScoringRules = {
-  'Days in the MLS from acceptance Date': {
-    'Not In the MLS': 1,
-    'Less than one week': 0,
-    'PR/BM': 0,
-    'More than a Week': -1
+  'Source': {
+    'Listing Agent Direct': 0,
+    'Seller direct': 1,
+    'Buyer agent from same office': 0,
+    'Buyers agent - different brokerage': -2
+  },
+  'Is wholesale price higher than listing asking price?': {
+    'Not in the MLS': 1,
+    'Significantly lower (10%+ below asking)': 1,
+    '5% below asking': 0,
+    'Below 5% below asking': -2,
+    'Over asking': -3
   },
   'Is purchase price over 1M': {
     '1M or under': 1,
@@ -22,12 +29,6 @@ export const scoringRules: ScoringRules = {
     'No': 0,
     'Approved Permits': 0,
     'Yes': -3
-  },
-  'Is wholesale price higher than listing asking price?': {
-    'Significantly lower (10%+ below asking)': 1,
-    '5% below asking': 0,
-    'Below 5% below asking': -2,
-    'Over asking': -3
   },
   'ARV Confidence': {
     'Sold Comps': 1,
