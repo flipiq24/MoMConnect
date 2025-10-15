@@ -18,6 +18,7 @@ export const properties = pgTable("properties", {
   address: text("address").notNull(),
   
   // Risk assessment fields
+  source: text("source"),
   daysInMLS: text("days_in_mls"),
   purchasePriceRange: text("purchase_price_range"),
   valueSubjectToPermits: text("value_subject_to_permits"),

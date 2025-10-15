@@ -65,6 +65,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       setPropertyData({
         ...existingProperty,
         // Map database fields to form fields
+        source: existingProperty.source || '',
         daysInMLS: existingProperty.daysInMLS || '',
         purchasePriceRange: existingProperty.purchasePriceRange || '',
         valueSubjectToPermits: existingProperty.valueSubjectToPermits || '',
@@ -90,11 +91,11 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   // Calculate score whenever property data changes
   useEffect(() => {
     const formDataForScoring = {
-      'Days in the MLS from acceptance Date': propertyData.daysInMLS,
+      'Source': propertyData.source,
+      'Is wholesale price higher than listing asking price?': propertyData.wholesalePriceVsAsking,
       'Is purchase price over 1M': propertyData.purchasePriceRange,
       'Is value subject to permits': propertyData.valueSubjectToPermits,
       'Is value subject to ADU?': propertyData.valueSubjectToADU,
-      'Is wholesale price higher than listing asking price?': propertyData.wholesalePriceVsAsking,
       'ARV Confidence': propertyData.arvConfidence,
       'ROI for time/Effort': propertyData.roiForTimeEffort,
       'Zoning': propertyData.zoning,
@@ -202,8 +203,24 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   const closingCosts = parseInt(propertyData.closingCosts) || 0;
   const arv = parseInt(propertyData.arv) || 0;
   const purchasePrice = parseInt(propertyData.purchasePrice) || 0;
+  const estimatedRehab = parseInt(propertyData.estimatedRehab) || 0;
+  const wholesaleFee = parseInt(propertyData.forecastedWholesaleFee) || 0;
+  const autoClosingCost = purchasePrice * 0.0065;
+  const totalCost = purchasePrice + estimatedRehab + wholesaleFee + autoClosingCost;
   const allInCost = purchasePrice + closingCosts;
-  const allInPercent = arv > 0 ? (allInCost / arv) * 100 : 0;
+  const allInPercent = arv > 0 ? (totalCost / arv) * 100 : 0;
+  
+  // All-in Cost/ARV percentage status
+  const getAllInStatus = () => {
+    if (allInPercent <= 83) {
+      return { text: 'Excellent Deal', bg: 'bg-green-100', textColor: 'text-green-800', border: 'border-green-500' };
+    } else if (allInPercent > 83 && allInPercent <= 85) {
+      return { text: 'Caution Zone', bg: 'bg-yellow-100', textColor: 'text-yellow-800', border: 'border-yellow-500' };
+    } else {
+      return { text: 'High Risk', bg: 'bg-red-100', textColor: 'text-red-800', border: 'border-red-500' };
+    }
+  };
+  const allInStatus = getAllInStatus();
 
   if (isLoadingProperty) {
     return (
@@ -225,12 +242,32 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             </p>
           </div>
           <StatusBadge status={emdRecommendation.emd} />
+          
+          {/* All-in Cost/ARV% Calculator */}
+          {arv > 0 && (
+            <div className={`px-4 py-2 rounded-md border-2 ${allInStatus.border} ${allInStatus.bg}`}>
+              <p className="text-xs text-muted-foreground">All-in Cost / ARV</p>
+              <p className={`text-xl font-bold ${allInStatus.textColor}`} data-testid="text-all-in-percent">
+                {allInPercent.toFixed(1)}%
+              </p>
+              <p className={`text-xs ${allInStatus.textColor} font-medium`} data-testid="text-all-in-status">
+                {allInStatus.text}
+              </p>
+            </div>
+          )}
         </div>
-        {lastSaved && (
-          <p className="text-sm text-muted-foreground" data-testid="text-saved-time">
-            Saved {lastSaved.toLocaleTimeString()}
-          </p>
-        )}
+        <div className="flex items-center gap-2">
+          {savePropertyMutation.isPending ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-saving">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Saving...</span>
+            </div>
+          ) : lastSaved ? (
+            <p className="text-sm text-muted-foreground" data-testid="text-saved-time">
+              Saved {lastSaved.toLocaleTimeString()}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {/* Multi-tab Workflow */}
@@ -379,7 +416,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   <div key={field} className="space-y-2">
                     <Label htmlFor={field}>{field}</Label>
                     <Select
-                      value={propertyData[field === 'Days in the MLS from acceptance Date' ? 'daysInMLS' : 
+                      value={propertyData[field === 'Source' ? 'source' :
                              field === 'Is purchase price over 1M' ? 'purchasePriceRange' :
                              field === 'Is value subject to permits' ? 'valueSubjectToPermits' :
                              field === 'Is value subject to ADU?' ? 'valueSubjectToADU' :
@@ -392,7 +429,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                              field === 'Obsolesces/Issues' ? 'obsolescencesIssues' :
                              field === 'Occupancy' ? 'occupancy' : field] || ''}
                       onValueChange={(value) => {
-                        const dbField = field === 'Days in the MLS from acceptance Date' ? 'daysInMLS' : 
+                        const dbField = field === 'Source' ? 'source' :
                                        field === 'Is purchase price over 1M' ? 'purchasePriceRange' :
                                        field === 'Is value subject to permits' ? 'valueSubjectToPermits' :
                                        field === 'Is value subject to ADU?' ? 'valueSubjectToADU' :
