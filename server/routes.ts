@@ -32,7 +32,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create property
   app.post("/api/properties", async (req, res) => {
     try {
-      const validatedData = insertPropertySchema.parse(req.body);
+      const { email, ...propertyData } = req.body;
+      console.log('[DEBUG POST /api/properties] Received email:', email);
+      
+      // Get user by email
+      const user = await storage.getUserByEmail(email);
+      console.log('[DEBUG POST /api/properties] Found user:', user);
+      
+      if (!user) {
+        // Log all users for debugging
+        const allUsers = await storage.users;
+        console.log('[DEBUG POST /api/properties] All users in storage:', Array.from(allUsers.values()));
+        return res.status(400).json({ error: `User not found for email: ${email}` });
+      }
+      
+      // Add userId to property data
+      const dataWithUserId = {
+        ...propertyData,
+        userId: user.id
+      };
+      
+      const validatedData = insertPropertySchema.parse(dataWithUserId);
       
       // Calculate score and EMD recommendation
       const totalScore = calculateTotalScore(validatedData);
@@ -48,6 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const property = await storage.createProperty(propertyWithScore);
       res.json(property);
     } catch (error: any) {
+      console.error('[DEBUG POST /api/properties] Error:', error);
       res.status(400).json({ error: error.message });
     }
   });
@@ -56,7 +77,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/properties/:id", async (req, res) => {
     try {
       const { id } = req.params;
-      const validatedData = updatePropertySchema.parse({ ...req.body, id });
+      const { email, ...propertyData } = req.body;
+      
+      // Get user by email if provided
+      let dataWithUserId = { ...propertyData, id };
+      if (email) {
+        const user = await storage.getUserByEmail(email);
+        if (!user) {
+          return res.status(400).json({ error: "User not found" });
+        }
+        dataWithUserId.userId = user.id;
+      }
+      
+      const validatedData = updatePropertySchema.parse(dataWithUserId);
       
       // Recalculate score if risk assessment fields changed
       const totalScore = calculateTotalScore(validatedData);

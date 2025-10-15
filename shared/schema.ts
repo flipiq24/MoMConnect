@@ -64,8 +64,6 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   totalScore: true,
   emdRecommendation: true,
   successChance: true,
-}).extend({
-  email: z.string().email(),
 });
 
 export const updatePropertySchema = insertPropertySchema.partial().extend({

@@ -17,7 +17,11 @@ interface PropertyFormData {
   [key: string]: any;
 }
 
-export default function Acquisition() {
+interface AcquisitionProps {
+  userEmail: string;
+}
+
+export default function Acquisition({ userEmail }: AcquisitionProps) {
   const { toast } = useToast();
   const [propertyData, setPropertyData] = useState<PropertyFormData>({});
   const [totalScore, setTotalScore] = useState(0);
@@ -27,7 +31,7 @@ export default function Acquisition() {
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
 
   // Load most recent property data on mount
-  const user = JSON.parse(localStorage.getItem('momUser') || '{}');
+  const user = { email: userEmail };
   const { data: existingProperty, isLoading: isLoadingProperty } = useQuery({
     queryKey: ['/api/users', user.email, 'recent-property'],
     queryFn: async () => {
@@ -76,10 +80,9 @@ export default function Acquisition() {
   // Create/update property mutation
   const savePropertyMutation = useMutation({
     mutationFn: async (data: PropertyFormData) => {
-      const user = JSON.parse(localStorage.getItem('momUser') || '{}');
       const propertyPayload = {
         ...data,
-        email: user.email
+        email: userEmail
       };
 
       if (currentPropertyId) {
@@ -93,7 +96,7 @@ export default function Acquisition() {
     onSuccess: () => {
       setLastSaved(new Date());
       // Invalidate recent property query to keep data fresh
-      queryClient.invalidateQueries({ queryKey: ['/api/users', user.email, 'recent-property'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users', userEmail, 'recent-property'] });
     },
     onError: (error: any) => {
       toast({

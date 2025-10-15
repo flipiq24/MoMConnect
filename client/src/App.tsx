@@ -46,7 +46,8 @@ function Router() {
       <Header userName={user.name} userEmail={user.email} />
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Switch>
-          <Route path="/" component={Acquisition} />
+          <Route path="/">{() => <Acquisition userEmail={user.email} />}</Route>
+          <Route path="/acquisition">{() => <Acquisition userEmail={user.email} />}</Route>
           <Route component={NotFound} />
         </Switch>
       </main>

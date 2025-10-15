@@ -18,8 +18,20 @@ export default function Login() {
       return await apiRequest('POST', '/api/users/login', data);
     },
     onSuccess: (user) => {
+      console.log('[LOGIN DEBUG] Received user from backend:', user);
       localStorage.setItem('momUser', JSON.stringify(user));
-      setLocation('/');
+      const savedUser = localStorage.getItem('momUser');
+      console.log('[LOGIN DEBUG] Saved to localStorage:', savedUser);
+      
+      if (savedUser) {
+        setLocation('/acquisition');
+      } else {
+        toast({
+          title: "Login Error",
+          description: "Failed to save user session. Please try again.",
+          variant: "destructive"
+        });
+      }
     },
     onError: (error: any) => {
       toast({
