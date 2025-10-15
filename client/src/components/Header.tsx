@@ -24,7 +24,7 @@ export function Header({ userName, userEmail }: HeaderProps) {
               <Home className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">Meeting of the Minds</h1>
+              <h1 className="text-lg font-bold text-foreground">MoM Wholesale System</h1>
               <p className="text-sm text-muted-foreground" data-testid="text-user-info">
                 {userName} • {userEmail}
               </p>
