@@ -34,6 +34,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
   const [zillowData, setZillowData] = useState<any>(null);
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   
   // Route-aware tab state
   const getTabFromUrl = () => {
@@ -1254,11 +1255,98 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         {/* AI Report Tab */}
         <TabsContent value="ai-report" className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>AI Analysis Report</CardTitle>
+              <Button
+                onClick={async () => {
+                  if (!propertyData.id) return;
+                  
+                  setIsGeneratingAnalysis(true);
+                  try {
+                    const response = await apiRequest('POST', `/api/properties/${propertyData.id}/analyze`);
+                    
+                    updateField('aiAnalysis', response);
+                    toast({
+                      title: "AI Analysis Generated",
+                      description: "Analysis complete. Review the recommendations below."
+                    });
+                  } catch (error: any) {
+                    toast({
+                      title: "Analysis Failed",
+                      description: error.message || "Failed to generate AI analysis.",
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setIsGeneratingAnalysis(false);
+                  }
+                }}
+                disabled={isGeneratingAnalysis || !propertyData.id}
+                data-testid="button-generate-analysis"
+              >
+                {isGeneratingAnalysis ? (
+                  <>
+                    <span className="animate-spin mr-2">⟳</span>
+                    Generating...
+                  </>
+                ) : (
+                  'Generate AI Analysis'
+                )}
+              </Button>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">AI analysis feature coming soon...</p>
+              {propertyData.aiAnalysis ? (
+                <div className="space-y-6">
+                  {/* Summary Section */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md" data-testid="section-ai-summary">
+                    <h3 className="font-semibold text-lg mb-2">Executive Summary</h3>
+                    <p className="text-sm">{propertyData.aiAnalysis.summary}</p>
+                  </div>
+
+                  {/* Strengths Section */}
+                  <div data-testid="section-ai-strengths">
+                    <h3 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">✓ Key Strengths</h3>
+                    <ul className="space-y-2">
+                      {propertyData.aiAnalysis.strengths?.map((strength: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-green-600 dark:text-green-400 mt-0.5">•</span>
+                          <span className="text-sm">{strength}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Concerns Section */}
+                  <div data-testid="section-ai-concerns">
+                    <h3 className="font-semibold text-lg mb-3 text-yellow-600 dark:text-yellow-400">⚠ Key Concerns</h3>
+                    <ul className="space-y-2">
+                      {propertyData.aiAnalysis.concerns?.map((concern: string, idx: number) => (
+                        <li key={idx} className="flex items-start gap-2">
+                          <span className="text-yellow-600 dark:text-yellow-400 mt-0.5">•</span>
+                          <span className="text-sm">{concern}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Recommendation Section */}
+                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-md border-l-4 border-indigo-500" data-testid="section-ai-recommendation">
+                    <h3 className="font-semibold text-lg mb-2">Final Recommendation</h3>
+                    <p className="text-sm">{propertyData.aiAnalysis.recommendation}</p>
+                  </div>
+
+                  {/* Regenerate Notice */}
+                  <p className="text-xs text-muted-foreground text-center">
+                    Analysis generated using GPT-5. Click "Generate AI Analysis" to refresh.
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-12" data-testid="prompt-generate-analysis">
+                  <p className="text-muted-foreground mb-4">No AI analysis available yet.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Click "Generate AI Analysis" above to get AI-powered insights and recommendations for this property.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
