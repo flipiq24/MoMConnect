@@ -598,6 +598,637 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   </SelectContent>
                 </Select>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Soft AM Approval Checklist */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Soft AM Approval Checklist</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CheckboxWithComment
+                id="read-agent-comments"
+                label="Read Agent Comments"
+                checked={propertyData.softAMChecklist?.readAgentComments?.checked || false}
+                comment={propertyData.softAMChecklist?.readAgentComments?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  readAgentComments: { checked, comment: propertyData.softAMChecklist?.readAgentComments?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  readAgentComments: { checked: propertyData.softAMChecklist?.readAgentComments?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="review-google-maps"
+                label="Review Google Maps"
+                checked={propertyData.softAMChecklist?.reviewGoogleMaps?.checked || false}
+                comment={propertyData.softAMChecklist?.reviewGoogleMaps?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewGoogleMaps: { checked, comment: propertyData.softAMChecklist?.reviewGoogleMaps?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewGoogleMaps: { checked: propertyData.softAMChecklist?.reviewGoogleMaps?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="review-inspections"
+                label="Review Required Inspections ***Utilities On ***Access"
+                checked={propertyData.softAMChecklist?.reviewRequiredInspections?.checked || false}
+                comment={propertyData.softAMChecklist?.reviewRequiredInspections?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewRequiredInspections: { checked, comment: propertyData.softAMChecklist?.reviewRequiredInspections?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewRequiredInspections: { checked: propertyData.softAMChecklist?.reviewRequiredInspections?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="usability-of-lot"
+                label="Usability of Lot"
+                checked={propertyData.softAMChecklist?.usabilityOfLot?.checked || false}
+                comment={propertyData.softAMChecklist?.usabilityOfLot?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  usabilityOfLot: { checked, comment: propertyData.softAMChecklist?.usabilityOfLot?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  usabilityOfLot: { checked: propertyData.softAMChecklist?.usabilityOfLot?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="possible-zoning"
+                label="Possible Zoning"
+                checked={propertyData.softAMChecklist?.possibleZoning?.checked || false}
+                comment={propertyData.softAMChecklist?.possibleZoning?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  possibleZoning: { checked, comment: propertyData.softAMChecklist?.possibleZoning?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  possibleZoning: { checked: propertyData.softAMChecklist?.possibleZoning?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="review-pictures"
+                label="Review Pictures"
+                checked={propertyData.softAMChecklist?.reviewPictures?.checked || false}
+                comment={propertyData.softAMChecklist?.reviewPictures?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewPictures: { checked, comment: propertyData.softAMChecklist?.reviewPictures?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  reviewPictures: { checked: propertyData.softAMChecklist?.reviewPictures?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="look-out-for-additions"
+                label="Look out for Additions"
+                checked={propertyData.softAMChecklist?.lookOutForAdditions?.checked || false}
+                comment={propertyData.softAMChecklist?.lookOutForAdditions?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  lookOutForAdditions: { checked, comment: propertyData.softAMChecklist?.lookOutForAdditions?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  lookOutForAdditions: { checked: propertyData.softAMChecklist?.lookOutForAdditions?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="read-system-notes"
+                label="Read system Notes"
+                checked={propertyData.softAMChecklist?.readSystemNotes?.checked || false}
+                comment={propertyData.softAMChecklist?.readSystemNotes?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  readSystemNotes: { checked, comment: propertyData.softAMChecklist?.readSystemNotes?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  readSystemNotes: { checked: propertyData.softAMChecklist?.readSystemNotes?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="agent-calls-backup"
+                label="Agent Calls Backup/Pending/Smoking guns"
+                checked={propertyData.softAMChecklist?.agentCallsBackup?.checked || false}
+                comment={propertyData.softAMChecklist?.agentCallsBackup?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  agentCallsBackup: { checked, comment: propertyData.softAMChecklist?.agentCallsBackup?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  agentCallsBackup: { checked: propertyData.softAMChecklist?.agentCallsBackup?.checked || false, comment }
+                })}
+              />
+
+              <div className="space-y-2">
+                <Label>Busy Streets</Label>
+                <Select
+                  value={propertyData.busyStreets || ''}
+                  onValueChange={(value) => updateField('busyStreets', value)}
+                >
+                  <SelectTrigger data-testid="select-busy-streets">
+                    <SelectValue placeholder="No traffic" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="No traffic">No traffic</SelectItem>
+                    <SelectItem value="Light traffic">Light traffic</SelectItem>
+                    <SelectItem value="Moderate traffic">Moderate traffic</SelectItem>
+                    <SelectItem value="Heavy traffic">Heavy traffic</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Obsolescence</Label>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="obsolescence"
+                      value="No"
+                      checked={propertyData.obsolescence === 'No'}
+                      onChange={(e) => updateField('obsolescence', e.target.value)}
+                      data-testid="radio-obsolescence-no"
+                    />
+                    <span>No</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="obsolescence"
+                      value="Yes"
+                      checked={propertyData.obsolescence === 'Yes'}
+                      onChange={(e) => updateField('obsolescence', e.target.value)}
+                      data-testid="radio-obsolescence-yes"
+                    />
+                    <span>Yes - Explain below</span>
+                  </label>
+                </div>
+                {propertyData.obsolescence === 'Yes' && (
+                  <Textarea
+                    value={propertyData.obsolescenceNotes || ''}
+                    onChange={(e) => updateField('obsolescenceNotes', e.target.value)}
+                    placeholder="Explain obsolescence..."
+                    rows={3}
+                    data-testid="textarea-obsolescence-notes"
+                  />
+                )}
+              </div>
+
+              <CheckboxWithComment
+                id="additional-verification"
+                label='Run own comps and then compare to Proposed "ARV"'
+                checked={propertyData.softAMChecklist?.additionalVerification?.checked || false}
+                comment={propertyData.softAMChecklist?.additionalVerification?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  additionalVerification: { checked, comment: propertyData.softAMChecklist?.additionalVerification?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  additionalVerification: { checked: propertyData.softAMChecklist?.additionalVerification?.checked || false, comment }
+                })}
+              />
+
+              <div className="space-y-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
+                <Label htmlFor="arvConfidencePercent">ARV confidence by %</Label>
+                <Input
+                  id="arvConfidencePercent"
+                  type="number"
+                  value={propertyData.arvConfidencePercent || ''}
+                  onChange={(e) => updateField('arvConfidencePercent', e.target.value)}
+                  placeholder="80"
+                  data-testid="input-arv-confidence-percent"
+                />
+              </div>
+
+              <CheckboxWithComment
+                id="confirm-offer-status"
+                label='Confirm "Offer Status" is correct'
+                checked={propertyData.softAMChecklist?.confirmOfferStatus?.checked || false}
+                comment={propertyData.softAMChecklist?.confirmOfferStatus?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmOfferStatus: { checked, comment: propertyData.softAMChecklist?.confirmOfferStatus?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmOfferStatus: { checked: propertyData.softAMChecklist?.confirmOfferStatus?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="verify-offer-terms"
+                label="Verify Offer terms and that proper Due-Diligence time frames have been requested"
+                checked={propertyData.softAMChecklist?.verifyOfferTerms?.checked || false}
+                comment={propertyData.softAMChecklist?.verifyOfferTerms?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  verifyOfferTerms: { checked, comment: propertyData.softAMChecklist?.verifyOfferTerms?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  verifyOfferTerms: { checked: propertyData.softAMChecklist?.verifyOfferTerms?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="investment-analysis-confirmed"
+                label="Investment Analysis confirmed"
+                checked={propertyData.softAMChecklist?.investmentAnalysisConfirmed?.checked || false}
+                comment={propertyData.softAMChecklist?.investmentAnalysisConfirmed?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  investmentAnalysisConfirmed: { checked, comment: propertyData.softAMChecklist?.investmentAnalysisConfirmed?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  investmentAnalysisConfirmed: { checked: propertyData.softAMChecklist?.investmentAnalysisConfirmed?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-roi"
+                label="Confirm ROI calculations are correct"
+                checked={propertyData.softAMChecklist?.confirmROICalculations?.checked || false}
+                comment={propertyData.softAMChecklist?.confirmROICalculations?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmROICalculations: { checked, comment: propertyData.softAMChecklist?.confirmROICalculations?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmROICalculations: { checked: propertyData.softAMChecklist?.confirmROICalculations?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-repair-cost"
+                label='Confirm "Repair Cost"'
+                checked={propertyData.softAMChecklist?.confirmRepairCost?.checked || false}
+                comment={propertyData.softAMChecklist?.confirmRepairCost?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmRepairCost: { checked, comment: propertyData.softAMChecklist?.confirmRepairCost?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmRepairCost: { checked: propertyData.softAMChecklist?.confirmRepairCost?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-offer-terms-match"
+                label="Confirm offer terms match contract"
+                checked={propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.checked || false}
+                comment={propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.comment}
+                onCheckedChange={(checked) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmOfferTermsMatchContract: { checked, comment: propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('softAMChecklist', {
+                  ...(propertyData.softAMChecklist ?? {}),
+                  confirmOfferTermsMatchContract: { checked: propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.checked || false, comment }
+                })}
+              />
+
+              <div className="space-y-2">
+                <Label className="font-semibold">Approved Inspections (each a check box)</Label>
+                <div className="space-y-2 pl-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.approvedInspections?.physicalInspection || false}
+                      onChange={(e) => updateField('approvedInspections', {
+                        ...(propertyData.approvedInspections ?? {}),
+                        physicalInspection: e.target.checked
+                      })}
+                      data-testid="checkbox-physical-inspection"
+                    />
+                    <span>Physical inspection</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.approvedInspections?.driveComps || false}
+                      onChange={(e) => updateField('approvedInspections', {
+                        ...(propertyData.approvedInspections ?? {}),
+                        driveComps: e.target.checked
+                      })}
+                      data-testid="checkbox-drive-comps"
+                    />
+                    <span>Drive Comps</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.approvedInspections?.cityPermitVerification || false}
+                      onChange={(e) => updateField('approvedInspections', {
+                        ...(propertyData.approvedInspections ?? {}),
+                        cityPermitVerification: e.target.checked
+                      })}
+                      data-testid="checkbox-city-permit"
+                    />
+                    <span>City permit verification</span>
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Hard AM Approval Checklist */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Hard AM Approval</CardTitle>
+              <p className="text-sm text-muted-foreground">Items review by C: Acquisition Manager</p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <CheckboxWithComment
+                id="review-discrepancies"
+                label="Review any Data Discrepancies"
+                checked={propertyData.hardAMChecklist?.reviewDataDiscrepancies?.checked || false}
+                comment={propertyData.hardAMChecklist?.reviewDataDiscrepancies?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  reviewDataDiscrepancies: { checked, comment: propertyData.hardAMChecklist?.reviewDataDiscrepancies?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  reviewDataDiscrepancies: { checked: propertyData.hardAMChecklist?.reviewDataDiscrepancies?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="order-termite"
+                label="Order Termite"
+                checked={propertyData.hardAMChecklist?.orderTermite?.checked || false}
+                comment={propertyData.hardAMChecklist?.orderTermite?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  orderTermite: { checked, comment: propertyData.hardAMChecklist?.orderTermite?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  orderTermite: { checked: propertyData.hardAMChecklist?.orderTermite?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-issues-addressed"
+                label="Confirm all issues were addressed in Due-Diligence"
+                checked={propertyData.hardAMChecklist?.confirmIssuesAddressed?.checked || false}
+                comment={propertyData.hardAMChecklist?.confirmIssuesAddressed?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmIssuesAddressed: { checked, comment: propertyData.hardAMChecklist?.confirmIssuesAddressed?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmIssuesAddressed: { checked: propertyData.hardAMChecklist?.confirmIssuesAddressed?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="check-user-activity"
+                label='Check "User Activity"'
+                checked={propertyData.hardAMChecklist?.checkUserActivity?.checked || false}
+                comment={propertyData.hardAMChecklist?.checkUserActivity?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  checkUserActivity: { checked, comment: propertyData.hardAMChecklist?.checkUserActivity?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  checkUserActivity: { checked: propertyData.hardAMChecklist?.checkUserActivity?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-offer-status-hard"
+                label='Confirm "Offer Status" is correct'
+                checked={propertyData.hardAMChecklist?.confirmOfferStatus?.checked || false}
+                comment={propertyData.hardAMChecklist?.confirmOfferStatus?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmOfferStatus: { checked, comment: propertyData.hardAMChecklist?.confirmOfferStatus?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmOfferStatus: { checked: propertyData.hardAMChecklist?.confirmOfferStatus?.checked || false, comment }
+                })}
+              />
+
+              <CheckboxWithComment
+                id="confirm-physical-inspections-completed"
+                label="Confirm Physical Inspections were completed"
+                checked={propertyData.hardAMChecklist?.confirmPhysicalInspections?.checked || false}
+                comment={propertyData.hardAMChecklist?.confirmPhysicalInspections?.comment}
+                onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmPhysicalInspections: { checked, comment: propertyData.hardAMChecklist?.confirmPhysicalInspections?.comment || '' }
+                })}
+                onCommentChange={(comment) => updateField('hardAMChecklist', {
+                  ...(propertyData.hardAMChecklist ?? {}),
+                  confirmPhysicalInspections: { checked: propertyData.hardAMChecklist?.confirmPhysicalInspections?.checked || false, comment }
+                })}
+              />
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="zoning-check"
+                    checked={propertyData.hardAMChecklist?.zoningCheck?.checked || false}
+                    onChange={(e) => updateField('hardAMChecklist', {
+                      ...(propertyData.hardAMChecklist ?? {}),
+                      zoningCheck: { checked: e.target.checked, comment: propertyData.hardAMChecklist?.zoningCheck?.comment || '' }
+                    })}
+                    data-testid="checkbox-zoning"
+                  />
+                  <Label htmlFor="zoning-check">Zoning (Enter Zoning)</Label>
+                </div>
+                <Input
+                  value={propertyData.zoningDetails || ''}
+                  onChange={(e) => updateField('zoningDetails', e.target.value)}
+                  placeholder="Enter zoning details..."
+                  data-testid="input-zoning-details"
+                />
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-semibold mb-4">ARV & Inspection Confirmation</h4>
+                <CheckboxWithComment
+                  id="confirm-value-inspection"
+                  label="Confirm value Based on inspection and Comp drive by"
+                  checked={propertyData.hardAMChecklist?.confirmValueBasedOnInspection?.checked || false}
+                  comment={propertyData.hardAMChecklist?.confirmValueBasedOnInspection?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmValueBasedOnInspection: { checked, comment: propertyData.hardAMChecklist?.confirmValueBasedOnInspection?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmValueBasedOnInspection: { checked: propertyData.hardAMChecklist?.confirmValueBasedOnInspection?.checked || false, comment }
+                  })}
+                />
+
+                <CheckboxWithComment
+                  id="called-pending-backup-comps"
+                  label="Called pending and back up comps for price"
+                  checked={propertyData.hardAMChecklist?.calledPendingBackupComps?.checked || false}
+                  comment={propertyData.hardAMChecklist?.calledPendingBackupComps?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    calledPendingBackupComps: { checked, comment: propertyData.hardAMChecklist?.calledPendingBackupComps?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    calledPendingBackupComps: { checked: propertyData.hardAMChecklist?.calledPendingBackupComps?.checked || false, comment }
+                  })}
+                />
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-semibold mb-4">Financial Analysis</h4>
+                <CheckboxWithComment
+                  id="re-estimated-analysis"
+                  label="Re estimated Investment Analysis based on actual numbers"
+                  checked={propertyData.hardAMChecklist?.reEstimatedInvestmentAnalysis?.checked || false}
+                  comment={propertyData.hardAMChecklist?.reEstimatedInvestmentAnalysis?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    reEstimatedInvestmentAnalysis: { checked, comment: propertyData.hardAMChecklist?.reEstimatedInvestmentAnalysis?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    reEstimatedInvestmentAnalysis: { checked: propertyData.hardAMChecklist?.reEstimatedInvestmentAnalysis?.checked || false, comment }
+                  })}
+                />
+
+                <CheckboxWithComment
+                  id="confirm-roi-hard"
+                  label="Confirm ROI calculations are correct"
+                  checked={propertyData.hardAMChecklist?.confirmROICalculations?.checked || false}
+                  comment={propertyData.hardAMChecklist?.confirmROICalculations?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmROICalculations: { checked, comment: propertyData.hardAMChecklist?.confirmROICalculations?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmROICalculations: { checked: propertyData.hardAMChecklist?.confirmROICalculations?.checked || false, comment }
+                  })}
+                />
+
+                <CheckboxWithComment
+                  id="confirm-repair-cost-hard"
+                  label='Confirm "Repair Cost" based on inspection'
+                  checked={propertyData.hardAMChecklist?.confirmRepairCost?.checked || false}
+                  comment={propertyData.hardAMChecklist?.confirmRepairCost?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmRepairCost: { checked, comment: propertyData.hardAMChecklist?.confirmRepairCost?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmRepairCost: { checked: propertyData.hardAMChecklist?.confirmRepairCost?.checked || false, comment }
+                  })}
+                />
+
+                <CheckboxWithComment
+                  id="confirm-terms-match-rpa"
+                  label='Confirm "Investment Analysis" and "Offer Terms" match RPA'
+                  checked={propertyData.hardAMChecklist?.confirmInvestmentAnalysisMatchesRPA?.checked || false}
+                  comment={propertyData.hardAMChecklist?.confirmInvestmentAnalysisMatchesRPA?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmInvestmentAnalysisMatchesRPA: { checked, comment: propertyData.hardAMChecklist?.confirmInvestmentAnalysisMatchesRPA?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    confirmInvestmentAnalysisMatchesRPA: { checked: propertyData.hardAMChecklist?.confirmInvestmentAnalysisMatchesRPA?.checked || false, comment }
+                  })}
+                />
+
+                <CheckboxWithComment
+                  id="floor-plan-modifications"
+                  label="Floor Plan Modifications required"
+                  checked={propertyData.hardAMChecklist?.floorPlanModifications?.checked || false}
+                  comment={propertyData.hardAMChecklist?.floorPlanModifications?.comment}
+                  onCheckedChange={(checked) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    floorPlanModifications: { checked, comment: propertyData.hardAMChecklist?.floorPlanModifications?.comment || '' }
+                  })}
+                  onCommentChange={(comment) => updateField('hardAMChecklist', {
+                    ...(propertyData.hardAMChecklist ?? {}),
+                    floorPlanModifications: { checked: propertyData.hardAMChecklist?.floorPlanModifications?.checked || false, comment }
+                  })}
+                />
+              </div>
+
+              <div className="pt-4 border-t">
+                <h4 className="font-semibold mb-4">City Check List</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.cityChecklist?.permits || false}
+                      onChange={(e) => updateField('cityChecklist', {
+                        ...(propertyData.cityChecklist ?? {}),
+                        permits: e.target.checked
+                      })}
+                      data-testid="checkbox-permits"
+                    />
+                    <span>Permits</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.cityChecklist?.codeEnforcement || false}
+                      onChange={(e) => updateField('cityChecklist', {
+                        ...(propertyData.cityChecklist ?? {}),
+                        codeEnforcement: e.target.checked
+                      })}
+                      data-testid="checkbox-code-enforcement"
+                    />
+                    <span>Code Enforcement</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData.cityChecklist?.zoning || false}
+                      onChange={(e) => updateField('cityChecklist', {
+                        ...(propertyData.cityChecklist ?? {}),
+                        zoning: e.target.checked
+                      })}
+                      data-testid="checkbox-city-zoning"
+                    />
+                    <span>Zoning</span>
+                  </label>
+                </div>
+              </div>
 
               <div className="pt-6">
                 <Button 
