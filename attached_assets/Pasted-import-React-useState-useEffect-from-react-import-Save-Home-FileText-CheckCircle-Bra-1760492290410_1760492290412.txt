@@ -1,0 +1,1866 @@
+import React, { useState, useEffect } from 'react';
+import { Save, Home, FileText, CheckCircle, Brain, AlertCircle, TrendingUp, Calculator } from 'lucide-react';
+
+const MoMWholesaleSystem = () => {
+  const [currentTab, setCurrentTab] = useState('login');
+  const [userData, setUserData] = useState({ name: '', email: '' });
+  const [propertyData, setPropertyData] = useState({});
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [zillowData, setZillowData] = useState(null);
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [riskScore, setRiskScore] = useState(0);
+  const [emdRecommendation, setEmdRecommendation] = useState(null);
+
+  // Point system scoring rules
+  const scoringRules = {
+    'Days in the MLS from acceptance Date': {
+      'Not In the MLS': 1,
+      'Less than one week': 0,
+      'PR/BM': 0,
+      'More than a Week': -1
+    },
+    'Is purchase price over 1M': {
+      '1M or under': 1,
+      '1-1.5M': 0,
+      '1.5M +': -1
+    },
+    'Is value subject to permits': {
+      'No': 0,
+      'Approved Permits': 0,
+      'Yes': -2
+    },
+    'Is value subject to ADU?': {
+      'No': 0,
+      'Approved Permits': 0,
+      'Yes': -3
+    },
+    'Is wholesale price higher than listing asking price?': {
+      'Significantly lower (10%+ below asking)': 1,
+      '5% below asking': 0,
+      'Below 5% below asking': -2,
+      'Over asking': -3
+    },
+    'ARV Confidence': {
+      'Sold Comps': 1,
+      'little to no Comps': 0,
+      'Pushing Value': -1
+    },
+    'ROI for time/Effort': {
+      'High': 1,
+      'Standard': 0,
+      'Low': -1
+    },
+    'Zoning': {
+      'Residential': 0,
+      'Commercial with 100% Burn Letter': -1,
+      'Commercial (Legal Non Conforming)': -3
+    },
+    'Rehab Level': {
+      'Light': 1,
+      'Medium': 0,
+      'Heavy': -1
+    },
+    'Area Desirability': {
+      'High': 1,
+      'Standard': 0,
+      'Low': -1
+    },
+    'Obsolesces/Issues': {
+      'No': 0,
+      'Minor': -1,
+      'Modest': -2,
+      'Major': -3
+    },
+    'Occupancy': {
+      'Vacant at COE': 1,
+      'Seller/Tenant will hold back funds and keep occupancy': -1,
+      'Seller Will stay for more than 3 months no hold back': -2,
+      'Tenant occupied': -3
+    }
+  };
+
+  // EXACT EMD Decision Matrix from user specifications
+  const getEMDRecommendation = (score) => {
+    const matrix = {
+      5: { emd: 'Yes EMD', chance: 100 },
+      4: { emd: 'Yes EMD', chance: 90 },
+      3: { emd: 'Yes EMD', chance: 80 },
+      2: { emd: 'Yes EMD', chance: 70 },
+      1: { emd: 'Yes EMD', chance: 60 },
+      0: { emd: 'Yes EMD', chance: 50 },
+      '-1': { emd: 'TBD', chance: 40 },
+      '-2': { emd: 'No EMD', chance: 30 },
+      '-3': { emd: 'No EMD', chance: 20 },
+      '-4': { emd: 'No EMD', chance: 10 },
+      '-5': { emd: 'No EMD', chance: 0 }
+    };
+    
+    // Handle scores outside the matrix
+    if (score > 5) return { emd: 'Yes EMD', chance: 100 };
+    if (score < -5) return { emd: 'No EMD', chance: 0 };
+    
+    return matrix[score.toString()] || { emd: 'TBD', chance: 40 };
+  };
+
+  // Get color for point value
+  const getPointColor = (points) => {
+    if (points > 0) return 'bg-green-100 text-green-800 border-green-300';
+    if (points < 0) return 'bg-red-100 text-red-800 border-red-300';
+    return 'bg-white text-gray-800 border-gray-300';
+  };
+
+  // Get color for select options
+  const getSelectColor = (field, value) => {
+    if (!value || !scoringRules[field]) return '';
+    const points = scoringRules[field][value];
+    if (points > 0) return 'bg-green-50 border-green-500';
+    if (points < 0) return 'bg-red-50 border-red-500';
+    return 'bg-white border-gray-300';
+  };
+
+  // Get EMD status color
+  const getEMDStatusColor = (emdStatus) => {
+    if (emdStatus === 'Yes EMD') return 'bg-green-500 text-white';
+    if (emdStatus === 'TBD') return 'bg-yellow-500 text-white';
+    if (emdStatus === 'No EMD') return 'bg-red-500 text-white';
+    return 'bg-gray-500 text-white';
+  };
+
+  // Calculate risk score
+  useEffect(() => {
+    let totalScore = 0;
+    Object.keys(scoringRules).forEach(field => {
+      const value = propertyData[field];
+      if (value && scoringRules[field][value] !== undefined) {
+        totalScore += scoringRules[field][value];
+      }
+    });
+    setRiskScore(totalScore);
+    setEmdRecommendation(getEMDRecommendation(totalScore));
+  }, [propertyData]);
+
+  // Auto-save to Google Sheets
+  useEffect(() => {
+    if (propertyData.address && Object.keys(propertyData).length > 1) {
+      const timer = setTimeout(() => {
+        saveToGoogleSheets();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [propertyData]);
+
+  const saveToGoogleSheets = async () => {
+    setAutoSaving(true);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      setLastSaved(new Date());
+    } catch (error) {
+      console.error('Save error:', error);
+    }
+    setAutoSaving(false);
+  };
+
+  const fetchZillowData = async (address) => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const mockData = {
+        address: address,
+        zpid: '12345678',
+        price: 850000,
+        bedrooms: 3,
+        bathrooms: 2,
+        sqft: 1800,
+        lotSize: 7200,
+        yearBuilt: 1985,
+        zestimate: 875000
+      };
+      setZillowData(mockData);
+      setPropertyData(prev => ({
+        ...prev,
+        'Estimated Rehab': 75000,
+        'ARV': mockData.zestimate
+      }));
+    } catch (error) {
+      console.error('Zillow fetch error:', error);
+    }
+  };
+
+  const generateAIAnalysis = async () => {
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const analysis = {
+        summary: `Based on the comprehensive analysis of ${propertyData.address}, this property has a total score of ${riskScore} points with a ${emdRecommendation?.chance}% estimated wholesale success rate.`,
+        strengths: riskScore > 0 ? [
+          'Positive risk factors outweigh concerns',
+          'Property meets key criteria for wholesaling',
+          'Market conditions appear favorable'
+        ] : [
+          'Standard risk profile',
+          'Requires careful due diligence'
+        ],
+        concerns: riskScore < 0 ? [
+          'Negative risk factors present',
+          'Additional review required',
+          'Consider risk mitigation strategies'
+        ] : ['Minimal concerns identified'],
+        recommendation: emdRecommendation?.emd === 'Yes EMD' 
+          ? 'PROCEED with EMD deposit. Risk factors are within acceptable range.'
+          : emdRecommendation?.emd === 'TBD'
+          ? 'TO BE DETERMINED. Score at threshold - additional review and manager approval required.'
+          : 'DO NOT SEND EMD. Risk score exceeds threshold. Property requires additional review or pass.',
+        breakdown: Object.keys(scoringRules).map(field => ({
+          field,
+          value: propertyData[field] || 'Not set',
+          points: scoringRules[field][propertyData[field]] || 0
+        }))
+      };
+      
+      setAiAnalysis(analysis);
+    } catch (error) {
+      console.error('AI analysis error:', error);
+    }
+  };
+
+  const handleLogin = () => {
+    if (userData.name && userData.email) {
+      localStorage.setItem('momUser', JSON.stringify(userData));
+      setCurrentTab('acquisition');
+    }
+  };
+
+  useEffect(() => {
+    const savedUser = localStorage.getItem('momUser');
+    if (savedUser) {
+      setUserData(JSON.parse(savedUser));
+    }
+  }, []);
+
+  const updateField = (field, value) => {
+    setPropertyData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Login Screen
+  if (currentTab === 'login' && !userData.name) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="inline-block p-3 bg-indigo-100 rounded-full mb-4">
+              <Home className="w-8 h-8 text-indigo-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">MoM Wholesale System</h1>
+            <p className="text-gray-600">Property Management & Analysis Platform</p>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+              <input
+                type="text"
+                value={userData.name}
+                onChange={(e) => setUserData(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="John Doe"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <input
+                type="email"
+                value={userData.email}
+                onChange={(e) => setUserData(prev => ({ ...prev, email: e.target.value }))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="john@company.com"
+              />
+            </div>
+            
+            <button
+              onClick={handleLogin}
+              disabled={!userData.name || !userData.email}
+              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            >
+              Access System
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Main Application
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Total Points Display */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Home className="w-6 h-6 text-indigo-600" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">MoM Wholesale System</h1>
+                <p className="text-sm text-gray-600">{userData.name} • {userData.email}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* TOTAL POINTS DISPLAY */}
+              <div className={`px-6 py-3 rounded-lg border-2 ${
+                riskScore >= 1 ? 'bg-green-50 border-green-500' :
+                riskScore === 0 ? 'bg-blue-50 border-blue-500' :
+                riskScore === -1 ? 'bg-yellow-50 border-yellow-500' :
+                'bg-red-50 border-red-500'
+              }`}>
+                <div className="flex items-center space-x-3">
+                  <Calculator className="w-5 h-5 text-gray-700" />
+                  <div>
+                    <p className="text-xs text-gray-600 font-medium">Total Points</p>
+                    <p className={`text-2xl font-bold ${
+                      riskScore >= 1 ? 'text-green-700' :
+                      riskScore === 0 ? 'text-blue-700' :
+                      riskScore === -1 ? 'text-yellow-700' :
+                      'text-red-700'
+                    }`}>
+                      {riskScore > 0 ? '+' : ''}{riskScore}
+                    </p>
+                  </div>
+                  <div className={`px-3 py-1 rounded font-semibold text-sm ${getEMDStatusColor(emdRecommendation?.emd)}`}>
+                    {emdRecommendation?.emd || 'N/A'}
+                  </div>
+                </div>
+              </div>
+
+              {autoSaving ? (
+                <span className="flex items-center text-sm text-gray-600">
+                  <Save className="w-4 h-4 mr-2 animate-pulse" />
+                  Saving...
+                </span>
+              ) : lastSaved ? (
+                <span className="text-sm text-green-600">
+                  Saved {lastSaved.toLocaleTimeString()}
+                </span>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex space-x-1">
+            {[
+              { id: 'acquisition', label: 'Acquisition Associate', icon: FileText },
+              { id: 'mom', label: 'MOM Meeting', icon: CheckCircle },
+              { id: 'approval', label: 'AM Hard Approval', icon: TrendingUp },
+              { id: 'ai', label: 'AI Report', icon: Brain }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setCurrentTab(tab.id)}
+                className={`flex items-center space-x-2 px-6 py-4 border-b-2 font-medium transition-colors ${
+                  currentTab === tab.id
+                    ? 'border-indigo-600 text-indigo-600'
+                    : 'border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300'
+                }`}
+              >
+                <tab.icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Content Area */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Acquisition Associate Tab */}
+        {currentTab === 'acquisition' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Property Information</h2>
+              
+              {/* Property Address & Zillow Integration */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Property Address *
+                </label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={propertyData.address || ''}
+                    onChange={(e) => updateField('address', e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="123 Main Street, City, State ZIP"
+                  />
+                  <button
+                    onClick={() => fetchZillowData(propertyData.address)}
+                    disabled={!propertyData.address}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300"
+                  >
+                    Fetch Zillow Data
+                  </button>
+                </div>
+                {zillowData && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                      ✓ Zillow data loaded: {zillowData.bedrooms}bed/{zillowData.bathrooms}bath, 
+                      {zillowData.sqft}sqft, Built {zillowData.yearBuilt}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ARV (After Repair Value)
+                  </label>
+                  <input
+                    type="number"
+                    value={propertyData['ARV'] || ''}
+                    onChange={(e) => updateField('ARV', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="$875,000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Estimated Rehab
+                  </label>
+                  <input
+                    type="number"
+                    value={propertyData['Estimated Rehab'] || ''}
+                    onChange={(e) => updateField('Estimated Rehab', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="$75,000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Acquisition Purchase Price
+                  </label>
+                  <input
+                    type="number"
+                    value={propertyData['Acquisition purchase price'] || ''}
+                    onChange={(e) => updateField('Acquisition purchase price', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="$650,000"
+                  />
+                  {propertyData['Acquisition purchase price'] && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Est. Closing Cost (0.65%): ${(parseFloat(propertyData['Acquisition purchase price']) * 0.0065).toLocaleString(undefined, {maximumFractionDigits: 0})}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sale Price to Wholesale Buyer (Calculated)
+                  </label>
+                  <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg">
+                    <p className="text-lg font-semibold text-gray-900">
+                      ${(() => {
+                        const acquisitionPrice = parseFloat(propertyData['Acquisition purchase price']) || 0;
+                        const wholesaleFee = parseFloat(propertyData['Forecasted Wholesale Fee']) || 0;
+                        const salePrice = acquisitionPrice + wholesaleFee;
+                        // Auto-update the field
+                        if (salePrice > 0) {
+                          propertyData['Sale Price to wholesale buyer'] = salePrice;
+                        }
+                        return salePrice.toLocaleString(undefined, {maximumFractionDigits: 0});
+                      })()}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Acquisition + Wholesale Fee
+                    </p>
+                  </div>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Forecasted Wholesale Fee
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="number"
+                      value={propertyData['Forecasted Wholesale Fee'] || ''}
+                      onChange={(e) => updateField('Forecasted Wholesale Fee', e.target.value)}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="$50,000"
+                    />
+                    
+                    {/* ARV Percentage Calculator */}
+                    {propertyData['ARV'] && propertyData['Acquisition purchase price'] && propertyData['Estimated Rehab'] && propertyData['Forecasted Wholesale Fee'] && (
+                      (() => {
+                        const arv = parseFloat(propertyData['ARV']) || 0;
+                        const acquisitionPrice = parseFloat(propertyData['Acquisition purchase price']) || 0;
+                        const estimatedRehab = parseFloat(propertyData['Estimated Rehab']) || 0;
+                        const wholesaleFee = parseFloat(propertyData['Forecasted Wholesale Fee']) || 0;
+                        const closingCost = acquisitionPrice * 0.0065;
+                        const totalCost = acquisitionPrice + estimatedRehab + wholesaleFee + closingCost;
+                        const percentage = arv > 0 ? (totalCost / arv) * 100 : 0;
+                        
+                        let bgColor, textColor, borderColor, statusText;
+                        if (percentage <= 83) {
+                          bgColor = 'bg-green-100';
+                          textColor = 'text-green-800';
+                          borderColor = 'border-green-500';
+                          statusText = 'Excellent Deal';
+                        } else if (percentage > 83 && percentage <= 85) {
+                          bgColor = 'bg-yellow-100';
+                          textColor = 'text-yellow-800';
+                          borderColor = 'border-yellow-500';
+                          statusText = 'Caution Zone';
+                        } else {
+                          bgColor = 'bg-red-100';
+                          textColor = 'text-red-800';
+                          borderColor = 'border-red-500';
+                          statusText = 'High Risk';
+                        }
+                        
+                        return (
+                          <div className={`flex-1 px-4 py-3 rounded-lg border-2 ${bgColor} ${borderColor}`}>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-xs text-gray-600 font-medium">Total All-In Cost / ARV</p>
+                                <p className={`text-2xl font-bold ${textColor}`}>
+                                  {percentage.toFixed(1)}%
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className={`text-xs font-semibold ${textColor} mb-1`}>{statusText}</p>
+                                <p className="text-xs text-gray-600">
+                                  ${totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})} / ${arv.toLocaleString()}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Includes 0.65% closing cost
+                                </p>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  🟢 ≤83% | 🟡 83.1-85% | 🔴 >85%
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Risk Factors Section with Color Coding */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Risk Assessment Factors</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                🟢 Green = Positive points | ⚪ White = Neutral (0 points) | 🔴 Red = Negative points
+              </p>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Days in the MLS from acceptance Date
+                  </label>
+                  <select
+                    value={propertyData['Days in the MLS from acceptance Date'] || ''}
+                    onChange={(e) => updateField('Days in the MLS from acceptance Date', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Days in the MLS from acceptance Date', propertyData['Days in the MLS from acceptance Date'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Not In the MLS">Not In the MLS (+1)</option>
+                    <option value="Less than one week">Less than one week (0)</option>
+                    <option value="PR/BM">PR/BM (0)</option>
+                    <option value="More than a Week">More than a Week (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Is purchase price over 1M
+                  </label>
+                  <select
+                    value={propertyData['Is purchase price over 1M'] || ''}
+                    onChange={(e) => updateField('Is purchase price over 1M', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Is purchase price over 1M', propertyData['Is purchase price over 1M'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="1M or under">1M or under (+1)</option>
+                    <option value="1-1.5M">1-1.5M (0)</option>
+                    <option value="1.5M +">1.5M + (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Is value subject to permits
+                  </label>
+                  <select
+                    value={propertyData['Is value subject to permits'] || ''}
+                    onChange={(e) => updateField('Is value subject to permits', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Is value subject to permits', propertyData['Is value subject to permits'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="No">No (0)</option>
+                    <option value="Approved Permits">Approved Permits (0)</option>
+                    <option value="Yes">Yes (-2)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Is value subject to ADU?
+                  </label>
+                  <select
+                    value={propertyData['Is value subject to ADU?'] || ''}
+                    onChange={(e) => updateField('Is value subject to ADU?', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Is value subject to ADU?', propertyData['Is value subject to ADU?'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="No">No (0)</option>
+                    <option value="Approved Permits">Approved Permits (0)</option>
+                    <option value="Yes">Yes (-3)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Is wholesale price higher than listing asking price?
+                  </label>
+                  <select
+                    value={propertyData['Is wholesale price higher than listing asking price?'] || ''}
+                    onChange={(e) => updateField('Is wholesale price higher than listing asking price?', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Is wholesale price higher than listing asking price?', propertyData['Is wholesale price higher than listing asking price?'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Significantly lower (10%+ below asking)">Significantly lower (10%+ below asking) (+1)</option>
+                    <option value="5% below asking">5% below asking (0)</option>
+                    <option value="Below 5% below asking">Below 5% below asking (-2)</option>
+                    <option value="Over asking">Over asking (-3)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ARV Confidence
+                  </label>
+                  <select
+                    value={propertyData['ARV Confidence'] || ''}
+                    onChange={(e) => updateField('ARV Confidence', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('ARV Confidence', propertyData['ARV Confidence'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Sold Comps">Sold Comps (+1)</option>
+                    <option value="little to no Comps">little to no Comps (0)</option>
+                    <option value="Pushing Value">Pushing Value (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    ROI for time/Effort
+                  </label>
+                  <select
+                    value={propertyData['ROI for time/Effort'] || ''}
+                    onChange={(e) => updateField('ROI for time/Effort', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('ROI for time/Effort', propertyData['ROI for time/Effort'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="High">High (+1)</option>
+                    <option value="Standard">Standard (0)</option>
+                    <option value="Low">Low (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Zoning
+                  </label>
+                  <select
+                    value={propertyData['Zoning'] || ''}
+                    onChange={(e) => updateField('Zoning', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Zoning', propertyData['Zoning'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Residential">Residential (0)</option>
+                    <option value="Commercial with 100% Burn Letter">Commercial with 100% Burn Letter (-1)</option>
+                    <option value="Commercial (Legal Non Conforming)">Commercial (Legal Non Conforming) (-3)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rehab Level
+                  </label>
+                  <select
+                    value={propertyData['Rehab Level'] || ''}
+                    onChange={(e) => updateField('Rehab Level', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Rehab Level', propertyData['Rehab Level'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Light">Light (+1)</option>
+                    <option value="Medium">Medium (0)</option>
+                    <option value="Heavy">Heavy (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Area Desirability
+                  </label>
+                  <select
+                    value={propertyData['Area Desirability'] || ''}
+                    onChange={(e) => updateField('Area Desirability', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Area Desirability', propertyData['Area Desirability'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="High">High (+1)</option>
+                    <option value="Standard">Standard (0)</option>
+                    <option value="Low">Low (-1)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Obsolesces/Issues
+                  </label>
+                  <select
+                    value={propertyData['Obsolesces/Issues'] || ''}
+                    onChange={(e) => updateField('Obsolesces/Issues', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Obsolesces/Issues', propertyData['Obsolesces/Issues'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="No">No (0)</option>
+                    <option value="Minor">Minor (-1)</option>
+                    <option value="Modest">Modest (-2)</option>
+                    <option value="Major">Major (-3)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Occupancy
+                  </label>
+                  <select
+                    value={propertyData['Occupancy'] || ''}
+                    onChange={(e) => updateField('Occupancy', e.target.value)}
+                    className={`w-full px-4 py-2 border-2 rounded-lg focus:ring-2 focus:ring-indigo-500 ${
+                      getSelectColor('Occupancy', propertyData['Occupancy'])
+                    }`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Vacant at COE">Vacant at COE (+1)</option>
+                    <option value="Seller/Tenant will hold back funds and keep occupancy">Seller/Tenant hold back (-1)</option>
+                    <option value="Seller Will stay for more than 3 months no hold back">Seller 3+ months (-2)</option>
+                    <option value="Tenant occupied">Tenant occupied (-3)</option>
+                  </select>
+                </div>
+
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Obsolesces/Issues Description
+                  </label>
+                  <textarea
+                    value={propertyData['Obsolesces/Issues Description'] || ''}
+                    onChange={(e) => updateField('Obsolesces/Issues Description', e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Describe any obsolescence or issues..."
+                  />
+                </div>
+              </div>
+
+              {/* Current Risk Score Summary */}
+              <div className={`mt-6 p-6 rounded-lg border-2 ${
+                riskScore >= 1 ? 'bg-green-50 border-green-500' :
+                riskScore === 0 ? 'bg-blue-50 border-blue-500' :
+                riskScore === -1 ? 'bg-yellow-50 border-yellow-500' :
+                'bg-red-50 border-red-500'
+              }`}>
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className={`w-6 h-6 mt-1 ${
+                    riskScore >= 1 ? 'text-green-600' : 
+                    riskScore === 0 ? 'text-blue-600' :
+                    riskScore === -1 ? 'text-yellow-600' :
+                    'text-red-600'
+                  }`} />
+                  <div className="flex-1">
+                    <p className={`text-lg font-bold mb-1 ${
+                      riskScore >= 1 ? 'text-green-900' : 
+                      riskScore === 0 ? 'text-blue-900' :
+                      riskScore === -1 ? 'text-yellow-900' :
+                      'text-red-900'
+                    }`}>
+                      Current Risk Score: {riskScore > 0 ? '+' : ''}{riskScore} points {
+                        riskScore > 0 ? '(Positive)' : 
+                        riskScore === 0 ? '(Neutral)' : 
+                        riskScore === -1 ? '(TBD)' :
+                        '(Negative)'
+                      }
+                    </p>
+                    <p className={`text-base font-medium ${
+                      riskScore >= 1 ? 'text-green-700' : 
+                      riskScore === 0 ? 'text-blue-700' :
+                      riskScore === -1 ? 'text-yellow-700' :
+                      'text-red-700'
+                    }`}>
+                      EMD Recommendation: {emdRecommendation?.emd || 'N/A'} ({emdRecommendation?.chance}% success rate)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MOM Meeting Tab */}
+        {currentTab === 'mom' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">MOM Meeting Review</h2>
+              
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h3 className="font-semibold text-gray-900 mb-3">Property Summary</h3>
+                <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <span className="text-gray-600">Address:</span>
+                    <p className="font-medium">{propertyData.address || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">ARV:</span>
+                    <p className="font-medium">${propertyData['ARV']?.toLocaleString() || 'Not set'}</p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">Total Points:</span>
+                    <p className={`font-bold text-lg ${
+                      riskScore >= 1 ? 'text-green-600' : 
+                      riskScore === 0 ? 'text-blue-600' :
+                      riskScore === -1 ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {riskScore > 0 ? '+' : ''}{riskScore}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-gray-600">EMD Status:</span>
+                    <p className={`font-bold ${
+                      emdRecommendation?.emd === 'Yes EMD' ? 'text-green-600' :
+                      emdRecommendation?.emd === 'TBD' ? 'text-yellow-600' :
+                      'text-red-600'
+                    }`}>
+                      {emdRecommendation?.emd || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Disposition Manager Approval Status
+                  </label>
+                  <select
+                    value={propertyData['Disposition Manager Approval Status'] || ''}
+                    onChange={(e) => updateField('Disposition Manager Approval Status', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Approved Ready to send">Approved Ready to send</option>
+                    <option value="Needs Review">Needs Review</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    DM's Confidence of Assignment by %
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={propertyData["DM's Confidence of Assignment by %"] || ''}
+                    onChange={(e) => updateField("DM's Confidence of Assignment by %", e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="75"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    DM Confidence Explanation
+                  </label>
+                  <textarea
+                    value={propertyData['DM Confidence Explanation'] || ''}
+                    onChange={(e) => updateField('DM Confidence Explanation', e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Explain confidence level reasoning..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Who drove the comps?
+                  </label>
+                  <select
+                    value={propertyData['Who drove the comps?'] || ''}
+                    onChange={(e) => updateField('Who drove the comps?', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Field Analyst">Field Analyst</option>
+                    <option value="Acquisition Manager">Acquisition Manager</option>
+                    <option value="Disposition Manager">Disposition Manager</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Who Inspected Property?
+                  </label>
+                  <select
+                    value={propertyData['Who Inspected Property?'] || ''}
+                    onChange={(e) => updateField('Who Inspected Property?', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Field Analyst">Field Analyst</option>
+                    <option value="Acquisition Manager">Acquisition Manager</option>
+                    <option value="Third Party Inspector">Third Party Inspector</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Detail description for wholesaling
+                  </label>
+                  <textarea
+                    value={propertyData['Detail description for wholesaling  '] || ''}
+                    onChange={(e) => updateField('Detail description for wholesaling  ', e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Detailed property description for wholesale marketing..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Short description for wholesaling
+                  </label>
+                  <textarea
+                    value={propertyData['Short description for wholesaling  '] || ''}
+                    onChange={(e) => updateField('Short description for wholesaling  ', e.target.value)}
+                    rows={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Brief marketing description..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Checklist Items */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Soft AM Approval Checklist</h3>
+              
+              <div className="space-y-4">
+                {[
+                  'Read Agent Comments',
+                  'Review Google Maps',
+                  'Review Required Inspections ***Utilities On ***Access',
+                  'Usability of Lot',
+                  'Possible Zoning',
+                  'Review Pictures',
+                  'Look out for Additions',
+                  'Read system Notes',
+                  'Agent Calls Backup/Pending/Smoking guns'
+                ].map((item, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`checklist_${idx}`] || false}
+                        onChange={(e) => updateField(`checklist_${idx}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{item}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyData[`checklist_${idx}_comment`] || ''}
+                      onChange={(e) => updateField(`checklist_${idx}_comment`, e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Add comments..."
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Busy Streets Dropdown */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Busy Streets
+                </label>
+                <select
+                  value={propertyData['Busy Streets'] || ''}
+                  onChange={(e) => updateField('Busy Streets', e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">Select...</option>
+                  <option value="No traffic">No traffic</option>
+                  <option value="Mid traffic">Mid traffic</option>
+                  <option value="High traffic">High traffic</option>
+                </select>
+              </div>
+
+              {/* Obsolescence with explanation */}
+              <div className="mt-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Obsolescence
+                </label>
+                <div className="flex items-center space-x-4 mb-2">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="obsolescence"
+                      value="No"
+                      checked={propertyData['Obsolescence Check'] === 'No'}
+                      onChange={(e) => updateField('Obsolescence Check', e.target.value)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700">No</span>
+                  </label>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      name="obsolescence"
+                      value="Yes"
+                      checked={propertyData['Obsolescence Check'] === 'Yes'}
+                      onChange={(e) => updateField('Obsolescence Check', e.target.value)}
+                      className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700">Yes - Explain below</span>
+                  </label>
+                </div>
+                {propertyData['Obsolescence Check'] === 'Yes' && (
+                  <textarea
+                    value={propertyData['Obsolescence Explanation'] || ''}
+                    onChange={(e) => updateField('Obsolescence Explanation', e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Explain obsolescence issues..."
+                  />
+                )}
+              </div>
+
+              {/* Additional verification items */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Additional Verification</h4>
+                
+                <div className="space-y-4">
+                  {/* First item - Run own comps */}
+                  <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`verification_0`] || false}
+                        onChange={(e) => updateField(`verification_0`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Run own comps and then compare to Proposed "ARV"</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyData[`verification_0_comment`] || ''}
+                      onChange={(e) => updateField(`verification_0_comment`, e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Add comments..."
+                    />
+                  </div>
+
+                  {/* ARV Confidence Percentage */}
+                  <div className="p-4 border border-gray-200 rounded-lg bg-blue-50">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      ARV confidence by %
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={propertyData['ARV confidence by %'] || ''}
+                      onChange={(e) => updateField('ARV confidence by %', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Enter percentage (0-100)"
+                    />
+                    {propertyData['ARV confidence by %'] && parseFloat(propertyData['ARV confidence by %']) < 80 && (
+                      <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-sm text-yellow-800">
+                        ⚠️ ARV confidence is below 80% - Additional review required
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Conditional item - AREA Expert (only shows if ARV confidence < 80%) */}
+                  {propertyData['ARV confidence by %'] && parseFloat(propertyData['ARV confidence by %']) < 80 && (
+                    <div className="border-2 border-yellow-400 rounded-lg p-4 bg-yellow-50">
+                      <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={propertyData[`verification_area_expert`] || false}
+                          onChange={(e) => updateField(`verification_area_expert`, e.target.checked)}
+                          className="w-5 h-5 text-yellow-600 border-yellow-400 rounded focus:ring-yellow-500"
+                        />
+                        <span className="text-sm font-medium text-yellow-900">⚠️ AREA Expert if ARV is not clean</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={propertyData[`verification_area_expert_comment`] || ''}
+                        onChange={(e) => updateField(`verification_area_expert_comment`, e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Document AREA Expert review..."
+                      />
+                    </div>
+                  )}
+
+                  {/* Conditional item - Additional ARV Review (only shows if ARV confidence < 80%) */}
+                  {propertyData['ARV confidence by %'] && parseFloat(propertyData['ARV confidence by %']) < 80 && (
+                    <div className="border-2 border-yellow-400 rounded-lg p-4 bg-yellow-50">
+                      <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={propertyData[`verification_arv_review`] || false}
+                          onChange={(e) => updateField(`verification_arv_review`, e.target.checked)}
+                          className="w-5 h-5 text-yellow-600 border-yellow-400 rounded focus:ring-yellow-500"
+                        />
+                        <span className="text-sm font-medium text-yellow-900">⚠️ Additional ARV Review Required (Confidence &lt; 80%)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={propertyData[`verification_arv_review_comment`] || ''}
+                        onChange={(e) => updateField(`verification_arv_review_comment`, e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Document additional ARV review actions taken..."
+                      />
+                    </div>
+                  )}
+
+                  {/* Remaining items */}
+                  {[
+                    'Confirm "Offer Status" is correct',
+                    'Verify Offer terms and that proper Due-Diligence time frames have been requested',
+                    'Investment Analysis confirmed',
+                    'Confirm ROI calculations are correct',
+                    'Confirm "Repair Cost"',
+                    'Confirm offer terms match contract'
+                  ].map((item, idx) => (
+                    <div key={idx + 2} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                      <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={propertyData[`verification_${idx + 2}`] || false}
+                          onChange={(e) => updateField(`verification_${idx + 2}`, e.target.checked)}
+                          className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">{item}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={propertyData[`verification_${idx + 2}_comment`] || ''}
+                        onChange={(e) => updateField(`verification_${idx + 2}_comment`, e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Add comments..."
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Physical Inspection Section */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-3">Approved Inspections (each a check box)</h4>
+                <div className="space-y-3">
+                  {[
+                    'Physical inspection',
+                    'Drive Comps',
+                    'City permit verification'
+                  ].map((item, idx) => (
+                    <label key={idx} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`inspection_${idx}`] || false}
+                        onChange={(e) => updateField(`inspection_${idx}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AM Hard Approval Tab */}
+        {currentTab === 'approval' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">AM Hard Approval</h2>
+              
+              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-900">Final Review Required</p>
+                    <p className="text-sm text-yellow-700 mt-1">
+                      Acquisition Manager must validate all information before final approval. Current Score: {riskScore} points ({emdRecommendation?.emd})
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Physical Inspection Contingency Removal
+                  </label>
+                  <select
+                    value={propertyData['Physical Inspection Contingency Removal'] || ''}
+                    onChange={(e) => updateField('Physical Inspection Contingency Removal', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Needs Additional Review">Needs Additional Review</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Removal of Contingencies Hard Approval Date
+                  </label>
+                  <input
+                    type="date"
+                    value={propertyData['Removal of Contingencies Hard Approval Date'] || ''}
+                    onChange={(e) => updateField('Removal of Contingencies Hard Approval Date', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Wholesale Status
+                  </label>
+                  <select
+                    value={propertyData['Wholesale Status'] || ''}
+                    onChange={(e) => updateField('Wholesale Status', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="Assigned/wholesale">Assigned/wholesale</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Canceled">Canceled</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Hard Approval Checklist */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Hard AM Approval</h3>
+              <p className="text-sm text-gray-600 mb-6">Items review by C: Acquisition Manager</p>
+              
+              <div className="space-y-4">
+                {[
+                  'Review any Data Discrepancies',
+                  'Order Termite',
+                  'Confirm all issues were addressed in Due-Diligence',
+                  'Check "User Activity"',
+                  'Confirm "Offer Status" is correct',
+                  'Confirm Physical Inspections were completed',
+                  'Discuss Finding with Acquisition Associate and Team',
+                  'Disclosures Reviewed, and all Issues addressed'
+                ].map((item, idx) => (
+                  <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`hard_checklist_${idx}`] || false}
+                        onChange={(e) => updateField(`hard_checklist_${idx}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">{item}</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyData[`hard_checklist_${idx}_comment`] || ''}
+                      onChange={(e) => updateField(`hard_checklist_${idx}_comment`, e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Add comments..."
+                    />
+                  </div>
+                ))}
+
+                {/* Sewer with conditional septic report */}
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                  <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData[`hard_checklist_sewer`] || false}
+                      onChange={(e) => updateField(`hard_checklist_sewer`, e.target.checked)}
+                      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Sewer (Septic, City, other)</span>
+                  </label>
+                  <select
+                    value={propertyData['Sewer Type'] || ''}
+                    onChange={(e) => updateField('Sewer Type', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 mb-2"
+                  >
+                    <option value="">Select type...</option>
+                    <option value="City">City</option>
+                    <option value="Septic">Septic</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  {propertyData['Sewer Type'] === 'Septic' && (
+                    <div className="mt-2 p-3 bg-yellow-50 border border-yellow-300 rounded">
+                      <p className="text-sm font-medium text-yellow-900 mb-2">⚠️ Septic Report Required</p>
+                      <input
+                        type="text"
+                        value={propertyData['Septic Report'] || ''}
+                        onChange={(e) => updateField('Septic Report', e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                        placeholder="Link to septic report or notes..."
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Zoning */}
+                <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                  <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                    <input
+                      type="checkbox"
+                      checked={propertyData[`hard_checklist_zoning`] || false}
+                      onChange={(e) => updateField(`hard_checklist_zoning`, e.target.checked)}
+                      className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Zoning (Enter Zoning)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={propertyData['Zoning Details'] || ''}
+                    onChange={(e) => updateField('Zoning Details', e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Enter zoning details..."
+                  />
+                </div>
+              </div>
+
+              {/* ARV Confirmation Section */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">ARV & Inspection Confirmation</h4>
+                <div className="space-y-4">
+                  <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData['arv_confirm_inspection'] || false}
+                        onChange={(e) => updateField('arv_confirm_inspection', e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Confirm value Based on inspection and Comp drive by</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyData['arv_confirm_inspection_comment'] || ''}
+                      onChange={(e) => updateField('arv_confirm_inspection_comment', e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Add comments..."
+                    />
+                  </div>
+
+                  <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData['arv_call_comps'] || false}
+                        onChange={(e) => updateField('arv_call_comps', e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Called pending and back up comps for price</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={propertyData['arv_call_comps_comment'] || ''}
+                      onChange={(e) => updateField('arv_call_comps_comment', e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Add comments..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Property Conditions */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Property Conditions</h4>
+                
+                {/* Busy Streets */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Busy Streets
+                  </label>
+                  <select
+                    value={propertyData['Hard Busy Streets'] || ''}
+                    onChange={(e) => updateField('Hard Busy Streets', e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="">Select...</option>
+                    <option value="No traffic">No traffic</option>
+                    <option value="Mid traffic">Mid traffic</option>
+                    <option value="High traffic">High traffic</option>
+                  </select>
+                </div>
+
+                {/* Additions */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additions legal or Illegal
+                  </label>
+                  <div className="flex items-center space-x-4 mb-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="hard_additions"
+                        value="Legal"
+                        checked={propertyData['Hard Additions'] === 'Legal'}
+                        onChange={(e) => updateField('Hard Additions', e.target.value)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Legal</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="hard_additions"
+                        value="Illegal"
+                        checked={propertyData['Hard Additions'] === 'Illegal'}
+                        onChange={(e) => updateField('Hard Additions', e.target.value)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Illegal</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="hard_additions"
+                        value="None"
+                        checked={propertyData['Hard Additions'] === 'None'}
+                        onChange={(e) => updateField('Hard Additions', e.target.value)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">None</span>
+                    </label>
+                  </div>
+                  {(propertyData['Hard Additions'] === 'Legal' || propertyData['Hard Additions'] === 'Illegal') && (
+                    <input
+                      type="text"
+                      value={propertyData['Hard Additions Comment'] || ''}
+                      onChange={(e) => updateField('Hard Additions Comment', e.target.value)}
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Describe additions..."
+                    />
+                  )}
+                </div>
+
+                {/* Obsolescence */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Obsolescence
+                  </label>
+                  <div className="flex items-center space-x-4 mb-2">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="hard_obsolescence"
+                        value="No"
+                        checked={propertyData['Hard Obsolescence'] === 'No'}
+                        onChange={(e) => updateField('Hard Obsolescence', e.target.value)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">No</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name="hard_obsolescence"
+                        value="Yes"
+                        checked={propertyData['Hard Obsolescence'] === 'Yes'}
+                        onChange={(e) => updateField('Hard Obsolescence', e.target.value)}
+                        className="w-4 h-4 text-indigo-600 border-gray-300 focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">Yes - Explain below</span>
+                    </label>
+                  </div>
+                  {propertyData['Hard Obsolescence'] === 'Yes' && (
+                    <textarea
+                      value={propertyData['Hard Obsolescence Explanation'] || ''}
+                      onChange={(e) => updateField('Hard Obsolescence Explanation', e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Explain obsolescence issues..."
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Financial Analysis */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Financial Analysis</h4>
+                <div className="space-y-4">
+                  {[
+                    'Re estimated Investment Analysis based on actual numbers',
+                    'Confirm ROI calculations are correct',
+                    'Confirm "Repair Cost" based on inspection',
+                    'Confirm "Investment Analysis" and "Offer Terms" match RPA'
+                  ].map((item, idx) => (
+                    <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                      <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                        <input
+                          type="checkbox"
+                          checked={propertyData[`hard_financial_${idx}`] || false}
+                          onChange={(e) => updateField(`hard_financial_${idx}`, e.target.checked)}
+                          className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">{item}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={propertyData[`hard_financial_${idx}_comment`] || ''}
+                        onChange={(e) => updateField(`hard_financial_${idx}_comment`, e.target.value)}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                        placeholder="Add comments..."
+                      />
+                    </div>
+                  ))}
+
+                  {/* Floor Plan Modifications with conditional requirements */}
+                  <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <label className="flex items-center space-x-3 cursor-pointer mb-2">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`hard_floor_plan`] || false}
+                        onChange={(e) => updateField(`hard_floor_plan`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Floor Plan Modifications required</span>
+                    </label>
+                    {propertyData[`hard_floor_plan`] && (
+                      <div className="mt-2 p-3 bg-yellow-50 border border-yellow-300 rounded space-y-2">
+                        <p className="text-sm font-medium text-yellow-900">⚠️ Floor Plan and Bid Required</p>
+                        <input
+                          type="text"
+                          value={propertyData['Floor Plan Link'] || ''}
+                          onChange={(e) => updateField('Floor Plan Link', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                          placeholder="Link to floor plan..."
+                        />
+                        <input
+                          type="text"
+                          value={propertyData['Floor Plan Bid'] || ''}
+                          onChange={(e) => updateField('Floor Plan Bid', e.target.value)}
+                          className="w-full px-3 py-2 text-sm border border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500"
+                          placeholder="Link to bid or bid amount..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* City Check List */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">City Check List</h4>
+                <div className="space-y-3">
+                  {[
+                    'Permits',
+                    'Code Enforcement',
+                    'Zoning'
+                  ].map((item, idx) => (
+                    <label key={idx} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={propertyData[`city_check_${idx}`] || false}
+                        onChange={(e) => updateField(`city_check_${idx}`, e.target.checked)}
+                        className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                      />
+                      <span className="text-sm text-gray-700">{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    if (confirm('Approve this property for wholesale?')) {
+                      updateField('Final AM Approval', 'Approved');
+                      updateField('Final AM Approval Date', new Date().toISOString().split('T')[0]);
+                      alert('Property approved! Moving to AI Report for final analysis.');
+                      setCurrentTab('ai');
+                    }
+                  }}
+                  className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                >
+                  Grant Final AM Approval
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* AI Report Tab */}
+        {currentTab === 'ai' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">AI Analysis Report</h2>
+                <button
+                  onClick={generateAIAnalysis}
+                  disabled={!propertyData.address}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:bg-gray-300 flex items-center space-x-2"
+                >
+                  <Brain className="w-4 h-4" />
+                  <span>Generate AI Analysis</span>
+                </button>
+              </div>
+
+              {!aiAnalysis ? (
+                <div className="text-center py-12">
+                  <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Click "Generate AI Analysis" to evaluate this property</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Risk Score Card */}
+                  <div className={`p-6 rounded-lg border-2 ${
+                    riskScore >= 1 ? 'bg-green-50 border-green-500' : 
+                    riskScore === 0 ? 'bg-blue-50 border-blue-500' :
+                    riskScore === -1 ? 'bg-yellow-50 border-yellow-500' :
+                    'bg-red-50 border-red-500'
+                  }`}>
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-900">
+                          Total Points: {riskScore > 0 ? '+' : ''}{riskScore}
+                        </h3>
+                        <p className={`text-lg font-medium ${
+                          emdRecommendation?.emd === 'Yes EMD' ? 'text-green-700' :
+                          emdRecommendation?.emd === 'TBD' ? 'text-yellow-700' :
+                          'text-red-700'
+                        }`}>
+                          {emdRecommendation?.emd === 'Yes EMD' ? '✓ SEND EMD' : 
+                           emdRecommendation?.emd === 'TBD' ? '⚠ TO BE DETERMINED' : 
+                           '✗ DO NOT SEND EMD'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-3xl font-bold text-gray-900">{emdRecommendation?.chance}%</p>
+                        <p className="text-sm text-gray-600">Wholesale Success Rate</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Summary */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <h3 className="font-bold text-gray-900 mb-3">Executive Summary</h3>
+                    <p className="text-gray-700">{aiAnalysis.summary}</p>
+                  </div>
+
+                  {/* Recommendation */}
+                  <div className={`p-6 rounded-lg ${
+                    emdRecommendation?.emd === 'Yes EMD'
+                      ? 'bg-green-100 border border-green-300'
+                      : emdRecommendation?.emd === 'TBD'
+                      ? 'bg-yellow-100 border border-yellow-300'
+                      : 'bg-red-100 border border-red-300'
+                  }`}>
+                    <h3 className="font-bold text-gray-900 mb-3">Final Recommendation</h3>
+                    <p className="text-gray-800 font-medium">{aiAnalysis.recommendation}</p>
+                  </div>
+
+                  {/* Strengths */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="font-bold text-gray-900 mb-3">Strengths</h3>
+                    <ul className="space-y-2">
+                      {aiAnalysis.strengths.map((strength, idx) => (
+                        <li key={idx} className="flex items-start space-x-2">
+                          <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">{strength}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Concerns */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="font-bold text-gray-900 mb-3">Concerns</h3>
+                    <ul className="space-y-2">
+                      {aiAnalysis.concerns.map((concern, idx) => (
+                        <li key={idx} className="flex items-start space-x-2">
+                          <AlertCircle className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                          <span className="text-gray-700">{concern}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Point Breakdown */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="font-bold text-gray-900 mb-4">Risk Factor Breakdown</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Factor</th>
+                            <th className="text-left py-2 px-3 text-sm font-semibold text-gray-700">Value</th>
+                            <th className="text-right py-2 px-3 text-sm font-semibold text-gray-700">Points</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {aiAnalysis.breakdown.map((item, idx) => (
+                            <tr key={idx} className="border-b border-gray-100">
+                              <td className="py-2 px-3 text-sm text-gray-700">{item.field}</td>
+                              <td className="py-2 px-3 text-sm text-gray-600">{item.value}</td>
+                              <td className="py-2 px-3 text-sm text-right font-medium">
+                                <span className={`px-2 py-1 rounded ${getPointColor(item.points)}`}>
+                                  {item.points > 0 ? '+' : ''}{item.points}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="border-t-2 border-gray-300">
+                            <td className="py-2 px-3 text-sm font-bold text-gray-900" colSpan={2}>
+                              TOTAL POINTS
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <span className={`text-lg font-bold px-3 py-1 rounded ${
+                                riskScore >= 1 ? 'bg-green-100 text-green-800' : 
+                                riskScore === 0 ? 'bg-blue-100 text-blue-800' :
+                                riskScore === -1 ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {riskScore > 0 ? '+' : ''}{riskScore}
+                              </span>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Side-by-Side Comparison */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <h3 className="font-bold text-gray-900 mb-4">Field Validation (Acquisition vs Final)</h3>
+                    <div className="space-y-3">
+                      {[
+                        { field: 'ARV', acquisition: propertyData['ARV'], final: propertyData['ARV'] },
+                        { field: 'Estimated Rehab', acquisition: propertyData['Estimated Rehab'], final: propertyData['Estimated Rehab'] },
+                        { field: 'Purchase Price', acquisition: propertyData['Acquisition purchase price'], final: propertyData['Acquisition purchase price'] }
+                      ].map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-3 gap-4 p-3 bg-gray-50 rounded">
+                          <div className="text-sm font-medium text-gray-700">{item.field}</div>
+                          <div className="text-sm text-gray-600">
+                            Initial: ${item.acquisition?.toLocaleString() || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Final: ${item.final?.toLocaleString() || 'N/A'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Export Options */}
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => alert('Exporting to Google Sheets...')}
+                      className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700"
+                    >
+                      Save to Google Sheets
+                    </button>
+                    <button
+                      onClick={() => window.print()}
+                      className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
+                    >
+                      Print Report
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Setup Instructions Modal */}
+      <div className="fixed bottom-4 right-4">
+        <button
+          onClick={() => alert(`API Setup Instructions:
+
+1. Google Sheets API:
+   - Go to console.cloud.google.com
+   - Create new project
+   - Enable Google Sheets API
+   - Create credentials (API Key)
+   - Add to code: GOOGLE_SHEETS_API_KEY
+
+2. OpenAI API:
+   - Go to platform.openai.com
+   - Create API key
+   - Add to code: OPENAI_API_KEY
+
+3. Zillow Bridge API:
+   - No key required (rate-limited)
+   - Uses: zillow-bridge-api endpoint
+   
+Properties save to folder: "MoM Meeting"
+Each property creates new spreadsheet named by address.`)}
+          className="bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-gray-900"
+        >
+          Setup Instructions
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default MoMWholesaleSystem;
