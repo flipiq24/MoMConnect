@@ -149,9 +149,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Return most recently updated property
-      const sortedProperties = properties.sort((a, b) => 
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+      const sortedProperties = properties.sort((a, b) => {
+        const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return timeB - timeA;
+      });
 
       res.json(sortedProperties[0]);
     } catch (error: any) {
@@ -194,7 +196,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Update property with AI analysis
       const updatedProperty = await storage.updateProperty(id, {
-        ...property,
         aiAnalysis: analysis
       });
 
