@@ -1,4 +1,4 @@
-# MoM Wholesale System
+# Meeting of the Minds (MoM) Wholesale System
 
 ## Overview
 

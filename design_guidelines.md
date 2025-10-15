@@ -1,4 +1,4 @@
-# MoM Wholesale System - Design Guidelines
+# Meeting of the Minds (MoM) - Design Guidelines
 
 ## Design Approach
 **Selected Framework**: Material Design with dashboard-focused customization  
