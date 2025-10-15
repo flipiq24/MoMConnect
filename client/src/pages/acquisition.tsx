@@ -50,11 +50,16 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       if (!userEmail) return null;
       return await fetch(`/api/users/${userEmail}/recent-property`).then(r => r.json());
     },
-    enabled: !!userEmail
+    enabled: !!userEmail,
+    staleTime: 30000, // 30 seconds - cache stays fresh via manual updates
+    refetchOnWindowFocus: false, // Don't refetch on window focus during active editing
+    refetchOnMount: false // Don't refetch on mount - rely on cache kept fresh via setQueryData
   });
 
   // Hydrate form with existing property data
   useEffect(() => {
+    console.log('[HYDRATION] useEffect triggered, existingProperty:', existingProperty);
+    console.log('[HYDRATION] softAMChecklist in existingProperty:', existingProperty?.softAMChecklist);
     if (existingProperty && existingProperty.id) {
       setCurrentPropertyId(existingProperty.id);
       setPropertyData({
@@ -73,6 +78,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         obsolescencesIssues: existingProperty.obsolescencesIssues || '',
         occupancy: existingProperty.occupancy || ''
       });
+      console.log('[HYDRATION] setPropertyData called with softAMChecklist:', existingProperty.softAMChecklist);
       
       if (existingProperty.zillowData) {
         setZillowData(existingProperty.zillowData);
@@ -105,6 +111,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   // Auto-save property mutation
   const savePropertyMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log('[MUTATION] Input data.softAMChecklist:', data.softAMChecklist);
+      
       const propertyPayload = {
         ...data,
         email: userEmail,
@@ -113,17 +121,32 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         successChance: emdRecommendation.chance
       };
 
+      console.log('[MUTATION] propertyPayload.softAMChecklist:', propertyPayload.softAMChecklist);
+      console.log('[MUTATION] Full propertyPayload:', propertyPayload);
+
       if (currentPropertyId) {
         return await apiRequest('PATCH', `/api/properties/${currentPropertyId}`, propertyPayload);
       } else {
-        const result = await apiRequest('POST', '/api/properties', propertyPayload);
-        setCurrentPropertyId(result.id);
-        return result;
+        return await apiRequest('POST', '/api/properties', propertyPayload);
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedProperty) => {
+      console.log('[MUTATION-SUCCESS] Received savedProperty:', savedProperty);
+      console.log('[MUTATION-SUCCESS] softAMChecklist in response:', savedProperty?.softAMChecklist);
+      
+      // Set property ID if this was a new property
+      if (savedProperty?.id && !currentPropertyId) {
+        setCurrentPropertyId(savedProperty.id);
+      }
+      
       setLastSaved(new Date());
-      queryClient.invalidateQueries({ queryKey: ['/api/users', userEmail, 'recent-property'] });
+      // Update query cache directly to keep it fresh without triggering refetch
+      const queryKey = ['/api/users', userEmail, 'recent-property'];
+      console.log('[MUTATION-SUCCESS] Setting query cache with key:', queryKey);
+      queryClient.setQueryData(queryKey, savedProperty);
+      console.log('[MUTATION-SUCCESS] Cache updated, verifying...');
+      const cached = queryClient.getQueryData(queryKey);
+      console.log('[MUTATION-SUCCESS] Cached value after update:', cached);
     }
   });
 
@@ -577,7 +600,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   id="contingencyRemovalDate"
                   type="date"
                   value={propertyData.contingencyRemovalDate || ''}
-                  onChange={(e) => updateField('contingencyRemovalDate', e.target.value)}
+                  onChange={(e) => updateField('contingencyRemovalDate', e.target.value || null)}
                   data-testid="input-contingency-date"
                 />
               </div>
@@ -613,14 +636,20 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 label="Read Agent Comments"
                 checked={propertyData.softAMChecklist?.readAgentComments?.checked || false}
                 comment={propertyData.softAMChecklist?.readAgentComments?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  readAgentComments: { checked, comment: propertyData.softAMChecklist?.readAgentComments?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  readAgentComments: { checked: propertyData.softAMChecklist?.readAgentComments?.checked || false, comment }
-                })}
+                onCheckedChange={(checked) => {
+                  console.log('[CHECKBOX-HANDLER] Read Agent Comments onCheckedChange called with:', checked);
+                  updateField('softAMChecklist', {
+                    ...(propertyData.softAMChecklist ?? {}),
+                    readAgentComments: { checked, comment: propertyData.softAMChecklist?.readAgentComments?.comment || '' }
+                  });
+                }}
+                onCommentChange={(comment) => {
+                  console.log('[CHECKBOX-HANDLER] Read Agent Comments onCommentChange called with:', comment);
+                  updateField('softAMChecklist', {
+                    ...(propertyData.softAMChecklist ?? {}),
+                    readAgentComments: { checked: propertyData.softAMChecklist?.readAgentComments?.checked || false, comment }
+                  });
+                }}
               />
 
               <CheckboxWithComment
