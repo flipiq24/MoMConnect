@@ -1,5 +1,7 @@
 import { type User, type InsertUser, type Property, type InsertProperty, type UpdateProperty } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { users, properties } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -15,113 +17,62 @@ export interface IStorage {
   deleteProperty(id: string): Promise<boolean>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<string, User>;
-  private properties: Map<string, Property>;
-
-  constructor() {
-    this.users = new Map();
-    this.properties = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.email === email,
-    );
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { 
-      ...insertUser, 
-      id,
-      createdAt: new Date()
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values(insertUser)
+      .returning();
     return user;
   }
 
   // Property operations
   async getProperty(id: string): Promise<Property | undefined> {
-    return this.properties.get(id);
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property || undefined;
   }
 
   async getPropertiesByUserId(userId: string): Promise<Property[]> {
-    return Array.from(this.properties.values()).filter(
-      (property) => property.userId === userId
-    );
+    return await db.select().from(properties).where(eq(properties.userId, userId));
   }
 
   async createProperty(insertProperty: InsertProperty): Promise<Property> {
-    const id = randomUUID();
-    
-    // Get or create user
-    let user = await this.getUserByEmail(insertProperty.email);
-    if (!user) {
-      user = await this.createUser({
-        name: 'User',
-        email: insertProperty.email
-      });
-    }
-
-    const property: Property = {
-      id,
-      userId: user.id,
-      address: insertProperty.address,
-      daysInMLS: insertProperty.daysInMLS || null,
-      purchasePriceRange: insertProperty.purchasePriceRange || null,
-      valueSubjectToPermits: insertProperty.valueSubjectToPermits || null,
-      valueSubjectToADU: insertProperty.valueSubjectToADU || null,
-      wholesalePriceVsAsking: insertProperty.wholesalePriceVsAsking || null,
-      arvConfidence: insertProperty.arvConfidence || null,
-      roiForTimeEffort: insertProperty.roiForTimeEffort || null,
-      zoning: insertProperty.zoning || null,
-      rehabLevel: insertProperty.rehabLevel || null,
-      areaDesirability: insertProperty.areaDesirability || null,
-      obsolescencesIssues: insertProperty.obsolescencesIssues || null,
-      occupancy: insertProperty.occupancy || null,
-      purchasePrice: insertProperty.purchasePrice || null,
-      estimatedRehab: insertProperty.estimatedRehab || null,
-      arv: insertProperty.arv || null,
-      totalScore: insertProperty.totalScore || 0,
-      emdRecommendation: insertProperty.emdRecommendation || null,
-      successChance: insertProperty.successChance || null,
-      zillowData: insertProperty.zillowData || null,
-      aiAnalysis: insertProperty.aiAnalysis || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    this.properties.set(id, property);
+    const [property] = await db
+      .insert(properties)
+      .values(insertProperty)
+      .returning();
     return property;
   }
 
   async updateProperty(id: string, updateData: UpdateProperty): Promise<Property> {
-    const existing = this.properties.get(id);
-    if (!existing) {
+    const [updated] = await db
+      .update(properties)
+      .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(properties.id, id))
+      .returning();
+    
+    if (!updated) {
       throw new Error('Property not found');
     }
-
-    const updated: Property = {
-      ...existing,
-      ...updateData,
-      id: existing.id,
-      userId: existing.userId,
-      updatedAt: new Date()
-    };
-
-    this.properties.set(id, updated);
+    
     return updated;
   }
 
   async deleteProperty(id: string): Promise<boolean> {
-    return this.properties.delete(id);
+    const result = await db.delete(properties).where(eq(properties.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();

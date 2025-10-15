@@ -35,15 +35,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, ...propertyData } = req.body;
       console.log('[DEBUG POST /api/properties] Received email:', email);
       
-      // Get user by email
-      const user = await storage.getUserByEmail(email);
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+      
+      // Get or create user by email
+      let user = await storage.getUserByEmail(email);
       console.log('[DEBUG POST /api/properties] Found user:', user);
       
       if (!user) {
-        // Log all users for debugging
-        const allUsers = await storage.users;
-        console.log('[DEBUG POST /api/properties] All users in storage:', Array.from(allUsers.values()));
-        return res.status(400).json({ error: `User not found for email: ${email}` });
+        console.log('[DEBUG POST /api/properties] User not found, creating new user');
+        // Create user with email if they don't exist
+        user = await storage.createUser({
+          name: 'User',  // Default name
+          email
+        });
+        console.log('[DEBUG POST /api/properties] Created user:', user);
       }
       
       // Add userId to property data

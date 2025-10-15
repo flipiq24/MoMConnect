@@ -14,7 +14,7 @@ export const users = pgTable("users", {
 // Property schema for wholesale analysis
 export const properties = pgTable("properties", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
   address: text("address").notNull(),
   
   // Risk assessment fields

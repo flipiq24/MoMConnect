@@ -41,6 +41,11 @@ function Router() {
     return <Login />;
   }
 
+  // Extra safety check - should never hit this but TypeScript needs it
+  if (!user.email) {
+    return <Login />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header userName={user.name} userEmail={user.email} />
