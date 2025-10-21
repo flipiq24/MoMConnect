@@ -300,7 +300,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             <CardContent className="space-y-6">
               {/* Property Address with Fetch Zillow Button */}
               <div className="space-y-2">
-                <Label htmlFor="address">Property Address *</Label>
+                <Label htmlFor="address" title="Enter the full property street address, city, state and ZIP code">Property Address *</Label>
                 <div className="flex gap-2">
                   <Input
                     id="address"
@@ -314,6 +314,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                     onClick={() => fetchZillowMutation.mutate(propertyData.address)}
                     disabled={!propertyData.address || fetchZillowMutation.isPending}
                     data-testid="button-fetch-zillow"
+                    title="Fetch property data from Zillow to auto-populate ARV and property details"
                   >
                     {fetchZillowMutation.isPending ? 'Fetching...' : 'Fetch Zillow Data'}
                   </Button>
@@ -328,7 +329,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               {/* Financial Fields */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="arv">ARV (After Repair Value)</Label>
+                  <Label htmlFor="arv" title="After Repair Value - the estimated market value of the property after all repairs and renovations are completed">ARV (After Repair Value)</Label>
                   <Input
                     id="arv"
                     type="number"
@@ -340,7 +341,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="estimatedRehab">Estimated Rehab</Label>
+                  <Label htmlFor="estimatedRehab" title="Total estimated cost for all repairs, renovations, and improvements required to bring the property to ARV condition">Estimated Rehab</Label>
                   <Input
                     id="estimatedRehab"
                     type="number"
@@ -354,7 +355,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="purchasePrice">Acquisition Purchase Price</Label>
+                  <Label htmlFor="purchasePrice" title="The contract price you are paying to acquire the property from the seller">Acquisition Purchase Price</Label>
                   <Input
                     id="purchasePrice"
                     type="number"
@@ -367,7 +368,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="salePrice">Sale Price to Wholesale Buyer (Calculated)</Label>
+                  <Label htmlFor="salePrice" title="Calculated sale price to your wholesale buyer (Acquisition Purchase Price + Wholesale Fee)">Sale Price to Wholesale Buyer (Calculated)</Label>
                   <Input
                     id="salePrice"
                     value={`$${salePrice.toLocaleString()}`}
@@ -381,7 +382,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="forecastedWholesaleFee">Forecasted Wholesale Fee</Label>
+                  <Label htmlFor="forecastedWholesaleFee" title="Assignment fee charged to the wholesale buyer for the contract - your profit on this deal">Forecasted Wholesale Fee</Label>
                   <Input
                     id="forecastedWholesaleFee"
                     type="number"
@@ -408,13 +409,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           {/* Risk Assessment Factors - keeping existing structure */}
           <Card>
             <CardHeader>
-              <CardTitle>Risk Assessment Factors</CardTitle>
+              <CardTitle title="Point-based risk scoring system. Positive points = favorable deal. Negative points = higher risk">Risk Assessment Factors</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 {Object.entries(scoringRules).map(([field, options]) => (
                   <div key={field} className="space-y-2">
-                    <Label htmlFor={field}>{field}</Label>
+                    <Label htmlFor={field} title={`Select ${field} option. Points shown in parentheses affect total risk score`}>{field}</Label>
                     <Select
                       value={propertyData[field === 'Source' ? 'source' :
                              field === 'Is purchase price over 1M' ? 'purchasePriceRange' :
@@ -514,7 +515,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dmConfidencePercent">DM's Confidence of Assignment by %</Label>
+                <Label htmlFor="dmConfidencePercent" title="Your confidence level (0-100%) that you will successfully assign this wholesale contract to a buyer">DM's Confidence of Assignment by %</Label>
                 <Input
                   id="dmConfidencePercent"
                   type="number"
@@ -526,7 +527,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="dmConfidenceExplanation">DM Confidence Explanation</Label>
+                <Label htmlFor="dmConfidenceExplanation" title="Explain the rationale behind your confidence percentage">DM Confidence Explanation</Label>
                 <Textarea
                   id="dmConfidenceExplanation"
                   value={propertyData.dmConfidenceExplanation || ''}
@@ -539,7 +540,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Who drove the comps?</Label>
+                  <Label title="Identify who conducted the comparable sales analysis. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper comps analysis">Who drove the comps?</Label>
                   <Select
                     value={propertyData.compsDriver || ''}
                     onValueChange={(value) => updateField('compsDriver', value)}
@@ -556,7 +557,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Who Inspected Property?</Label>
+                  <Label title="Identify who conducted the physical property inspection. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper inspection">Who Inspected Property?</Label>
                   <Select
                     value={propertyData.propertyInspector || ''}
                     onValueChange={(value) => updateField('propertyInspector', value)}
@@ -671,6 +672,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="read-agent-comments"
                 label="Read Agent Comments"
+                tooltip="Review inspection findings with team and acquisition associate to align on property condition and strategy"
                 checked={propertyData.softAMChecklist?.readAgentComments?.checked || false}
                 comment={propertyData.softAMChecklist?.readAgentComments?.comment}
                 onCheckedChange={(checked) => {
@@ -692,6 +694,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="review-google-maps"
                 label="Review Google Maps"
+                tooltip="Review property location, nearby amenities, and area characteristics using satellite and street view"
                 checked={propertyData.softAMChecklist?.reviewGoogleMaps?.checked || false}
                 comment={propertyData.softAMChecklist?.reviewGoogleMaps?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -707,6 +710,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="review-inspections"
                 label="Review Required Inspections ***Utilities On ***Access"
+                tooltip="Verify all required inspections have been completed and documented before proceeding"
                 checked={propertyData.softAMChecklist?.reviewRequiredInspections?.checked || false}
                 comment={propertyData.softAMChecklist?.reviewRequiredInspections?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -722,6 +726,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="usability-of-lot"
                 label="Usability of Lot"
+                tooltip="Assess lot topography, setbacks, easements, and buildable area. Verify any restrictions affecting development or use"
                 checked={propertyData.softAMChecklist?.usabilityOfLot?.checked || false}
                 comment={propertyData.softAMChecklist?.usabilityOfLot?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -737,6 +742,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="possible-zoning"
                 label="Possible Zoning"
+                tooltip="Verify current zoning classification and permitted uses. Check for any zoning restrictions or variances needed"
                 checked={propertyData.softAMChecklist?.possibleZoning?.checked || false}
                 comment={propertyData.softAMChecklist?.possibleZoning?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -752,6 +758,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="review-pictures"
                 label="Review Pictures"
+                tooltip="Review all property photos for condition, quality, potential issues, and accuracy of listing representations"
                 checked={propertyData.softAMChecklist?.reviewPictures?.checked || false}
                 comment={propertyData.softAMChecklist?.reviewPictures?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -767,6 +774,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="look-out-for-additions"
                 label="Look out for Additions"
+                tooltip="CRITICAL: Even if additions appear in tax records, they may not be legally permitted. MUST call the city to verify permits. Unpermitted additions create major liability"
                 checked={propertyData.softAMChecklist?.lookOutForAdditions?.checked || false}
                 comment={propertyData.softAMChecklist?.lookOutForAdditions?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {
@@ -782,6 +790,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CheckboxWithComment
                 id="read-system-notes"
                 label="Read system Notes"
+                tooltip="Review system user activity to check for tenant occupancy status at close of escrow and any communication regarding possession"
                 checked={propertyData.softAMChecklist?.readSystemNotes?.checked || false}
                 comment={propertyData.softAMChecklist?.readSystemNotes?.comment}
                 onCheckedChange={(checked) => updateField('softAMChecklist', {

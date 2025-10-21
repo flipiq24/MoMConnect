@@ -14,6 +14,7 @@ interface CheckboxWithCommentProps {
   onCheckedChange: (checked: boolean) => void;
   onCommentChange: (comment: string) => void;
   disabled?: boolean;
+  tooltip?: string;
 }
 
 export function CheckboxWithComment({
@@ -23,7 +24,8 @@ export function CheckboxWithComment({
   comment,
   onCheckedChange,
   onCommentChange,
-  disabled = false
+  disabled = false,
+  tooltip
 }: CheckboxWithCommentProps) {
   const handleCheckboxChange = (value: boolean | "indeterminate") => {
     onCheckedChange(value === true);
@@ -39,7 +41,7 @@ export function CheckboxWithComment({
           disabled={disabled}
           data-testid={`checkbox-${id}`}
         />
-        <Label htmlFor={id} className="text-sm font-normal cursor-pointer">
+        <Label htmlFor={id} className="text-sm font-normal cursor-pointer" title={tooltip}>
           {label}
         </Label>
       </div>
