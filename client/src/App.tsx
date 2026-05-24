@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Acquisition from "@/pages/acquisition";
+import Pipeline from "@/pages/pipeline";
 import { Header } from "@/components/Header";
 
 function Router() {
@@ -53,6 +54,7 @@ function Router() {
         <Switch>
           <Route path="/">{() => <Acquisition userEmail={user.email} />}</Route>
           <Route path="/acquisition">{() => <Acquisition userEmail={user.email} />}</Route>
+          <Route path="/pipeline">{() => <Pipeline userEmail={user.email} />}</Route>
           <Route component={NotFound} />
         </Switch>
       </main>

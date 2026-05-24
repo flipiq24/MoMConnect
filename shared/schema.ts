@@ -77,6 +77,26 @@ export const properties = pgTable("properties", {
   finalApprovalGrantedBy: text("final_approval_granted_by"),
   finalApprovalDate: timestamp("final_approval_date"),
   
+  // Acquisition Pipeline (spreadsheet) fields
+  offerStatus: text("offer_status"),
+  listPrice: integer("list_price"),
+  finalAcceptedPrice: integer("final_accepted_price"),
+  estCOE: text("est_coe"),
+  acqAssociate: text("acq_associate"),
+  listingAgent: text("listing_agent"),
+  agentPhone: text("agent_phone"),
+  agentEmail: text("agent_email"),
+  ddDeadline: text("dd_deadline"),
+  ddStatus: text("dd_status"),
+  ddApprovedBy: text("dd_approved_by"),
+  ddApprovalDate: text("dd_approval_date"),
+  emdAmount: integer("emd_amount"),
+  emdDueDate: text("emd_due_date"),
+  emdStatus: text("emd_status"),
+  assignmentStatus: text("assignment_status"),
+  confidenceToAssign: text("confidence_to_assign"),
+  notes: text("notes"),
+
   // Zillow/property data
   zillowData: jsonb("zillow_data"),
   

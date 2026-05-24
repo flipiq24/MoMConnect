@@ -41,16 +41,28 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     const params = new URLSearchParams(location.split('?')[1] || '');
     return params.get('tab') || 'acquisition';
   };
+  const getPropertyIdFromUrl = () => {
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    return params.get('propertyId');
+  };
   const [activeTab, setActiveTab] = useState(getTabFromUrl());
+  const propertyIdFromUrl = getPropertyIdFromUrl();
 
-  // Load most recent property data
+  // Load property: if propertyId query param is present, load that specific
+  // property (e.g. when navigating from the Pipeline page). Otherwise fall
+  // back to the user's most recently updated property.
   const { data: existingProperty, isLoading: isLoadingProperty } = useQuery({
-    queryKey: ['/api/users', userEmail, 'recent-property'],
+    queryKey: propertyIdFromUrl
+      ? ['/api/properties', propertyIdFromUrl]
+      : ['/api/users', userEmail, 'recent-property'],
     queryFn: async () => {
+      if (propertyIdFromUrl) {
+        return await fetch(`/api/properties/${propertyIdFromUrl}`).then(r => r.json());
+      }
       if (!userEmail) return null;
       return await fetch(`/api/users/${userEmail}/recent-property`).then(r => r.json());
     },
-    enabled: !!userEmail,
+    enabled: !!userEmail || !!propertyIdFromUrl,
     staleTime: 30000, // 30 seconds - cache stays fresh via manual updates
     refetchOnWindowFocus: false, // Don't refetch on window focus during active editing
     refetchOnMount: false // Don't refetch on mount - rely on cache kept fresh via setQueryData

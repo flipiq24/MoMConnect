@@ -161,6 +161,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all properties for a user
+  app.get("/api/users/:email/properties", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.json([]);
+      }
+      const properties = await storage.getPropertiesByUserId(user.id);
+      const sorted = properties.sort((a, b) => {
+        const timeA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+        const timeB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+        return timeB - timeA;
+      });
+      res.json(sorted);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Save property to Google Sheets
   app.post("/api/properties/:id/save-to-sheets", async (req, res) => {
     try {
