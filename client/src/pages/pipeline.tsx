@@ -190,7 +190,7 @@ export default function Pipeline({ userEmail }: PipelineProps) {
 
   // Column group definitions for super-header
   const groups: { label: string; span: number; tone: string }[] = [
-    { label: 'PROPERTY', span: 3, tone: 'bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' },
+    { label: 'PROPERTY', span: 5, tone: 'bg-blue-100 dark:bg-blue-900/40 text-blue-900 dark:text-blue-100' },
     { label: 'DEAL INFO', span: 4, tone: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-900 dark:text-emerald-100' },
     { label: 'TEAM / AGENT', span: 4, tone: 'bg-purple-100 dark:bg-purple-900/40 text-purple-900 dark:text-purple-100' },
     { label: 'DUE DILIGENCE', span: 4, tone: 'bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100' },
@@ -203,9 +203,11 @@ export default function Pipeline({ userEmail }: PipelineProps) {
     '#',
     'Property Address',
     'City',
+    'Risk Score',
+    'EMD Rec',
     'Offer Status',
     'List Price',
-    'Final Accepted Price',
+    'Acq. Purchase Price',
     'Est. COE',
     'Acq. Associate',
     'Listing Agent',
@@ -341,6 +343,18 @@ export default function Pipeline({ userEmail }: PipelineProps) {
                     <TableCell className="border-r p-2 align-top min-w-[120px]">
                       {extractCity(row.address)}
                     </TableCell>
+                    <TableCell
+                      className="border-r p-2 align-top text-center font-mono"
+                      data-testid={`text-score-${row.id}`}
+                    >
+                      {row.totalScore ?? 0}
+                    </TableCell>
+                    <TableCell
+                      className="border-r p-2 align-top text-center"
+                      data-testid={`text-emd-rec-${row.id}`}
+                    >
+                      {row.emdRecommendation ?? '—'}
+                    </TableCell>
 
                     {/* DEAL INFO */}
                     <TableCell className="border-r p-1 align-top min-w-[180px]">
@@ -383,17 +397,17 @@ export default function Pipeline({ userEmail }: PipelineProps) {
                         <Input
                           type="number"
                           className="h-8 text-xs"
-                          value={getValue(row, 'finalAcceptedPrice') as any}
+                          value={getValue(row, 'purchasePrice') as any}
                           onChange={(e) =>
                             handleTextChange(
                               row.id,
-                              'finalAcceptedPrice',
+                              'purchasePrice',
                               e.target.value === '' ? '' : parseInt(e.target.value),
                             )
                           }
-                          data-testid={`input-final-price-${row.id}`}
+                          data-testid={`input-purchase-price-${row.id}`}
                         />
-                        <RequiredDot show={isRequiredEmpty(row, 'finalAcceptedPrice')} />
+                        <RequiredDot show={isRequiredEmpty(row, 'purchasePrice')} />
                       </div>
                     </TableCell>
                     <TableCell className="border-r p-1 align-top min-w-[140px]">
@@ -632,13 +646,13 @@ export default function Pipeline({ userEmail }: PipelineProps) {
                       </div>
                     </TableCell>
 
-                    {/* NOTES */}
+                    {/* NOTES — synced with Acquisition "Short description for wholesaling" */}
                     <TableCell className="p-1 align-top min-w-[240px]">
                       <Input
                         className="h-8 text-xs"
-                        value={getValue(row, 'notes') as string}
+                        value={getValue(row, 'wholesalingShortDescription') as string}
                         onChange={(e) =>
-                          handleTextChange(row.id, 'notes', e.target.value)
+                          handleTextChange(row.id, 'wholesalingShortDescription', e.target.value)
                         }
                         data-testid={`input-notes-${row.id}`}
                       />

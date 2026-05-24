@@ -63,7 +63,7 @@ export const ACQ_ASSOCIATE_OPTIONS = [
 export const ESCROW_OFFER_STATUSES = ["Offer Accepted", "Contract Assigned"] as const;
 
 export const PIPELINE_REQUIRED_FIELDS = [
-  "finalAcceptedPrice",
+  "purchasePrice",
   "acqAssociate",
   "ddDeadline",
   "ddStatus",
