@@ -298,9 +298,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                     EMD Recommendation: <span className={totalScore >= 0 ? 'text-green-600' : 'text-red-600'}>{emdRecommendation.emd}</span> ({emdRecommendation.chance}% success rate)
                   </p>
                 </div>
-                <Button variant="outline" className="ml-auto" data-testid="button-setup-instructions">
-                  Setup Instructions
-                </Button>
               </div>
             </CardContent>
           </Card>

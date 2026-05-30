@@ -272,7 +272,6 @@ export interface FinalContractTerms {
   hardApprovalToStartWholesale?: string;
   acquisitionInfoComments?: string;
   // Milestones
-  startProjectDate?: string;
   contractWrittenDate?: string;
   offerAcceptedDate?: string;
   estimatedCoe?: string; // auto-calculated
@@ -349,7 +348,4 @@ export interface FinalContractTerms {
   escrowCost?: string;
   otherCostOrCreditsOutside?: string;
   explanationOtherCostsCredits?: string;
-  idxOtherCost?: string;
-  idxOccupiedCost?: string;
-  idxTaxes?: string;
 }

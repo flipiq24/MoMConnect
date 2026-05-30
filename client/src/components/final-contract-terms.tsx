@@ -260,7 +260,6 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="Start Project Date" field="startProjectDate" type="date" required {...ctx} />
             <TextField label="Contract Written Date" field="contractWrittenDate" type="date" {...ctx} />
             <TextField label="Offer Accepted Date" field="offerAcceptedDate" type="date" {...ctx} />
             <DerivedDateField label="EMD Deadline" field="emdDeadline" hint="Offer Accepted Date + EMD Days (business days)" data={ctx.data} />
@@ -322,9 +321,6 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
               <SelectField label="Title Cost" field="titleCost" options={COST_RESPONSIBILITY} danger {...ctx} />
               <SelectField label="Escrow Cost" field="escrowCost" options={COST_RESPONSIBILITY} danger {...ctx} />
               <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
-              <TextField label="IDX Other Cost" field="idxOtherCost" type="number" required placeholder="$" {...ctx} />
-              <TextField label="IDX Occupied Cost" field="idxOccupiedCost" type="number" required placeholder="$" {...ctx} />
-              <TextField label="IDX Taxes" field="idxTaxes" type="number" required placeholder="$" {...ctx} />
               <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
             </div>
           </div>
