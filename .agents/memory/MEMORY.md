@@ -1,1 +1,1 @@
-- [wouter query params](wouter-query-params.md) — wouter v3 useLocation is pathname-only; read query strings with useSearch(), not location.split('?').
+- [Acquisition autosave loop](acquisition-autosave.md) — the page PATCHes the property every ~2s while idle due to a hydration↔mutation cache cycle; harmless but noisy.

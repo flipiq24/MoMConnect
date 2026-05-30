@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation, useSearch } from 'wouter';
+import { useLocation } from 'wouter';
 import { Save, Calculator, FileText, Loader2, TrendingUp, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,7 +27,6 @@ interface AcquisitionProps {
 export default function Acquisition({ userEmail }: AcquisitionProps) {
   const { toast } = useToast();
   const [location, setLocation] = useLocation();
-  const search = useSearch();
   const [propertyData, setPropertyData] = useState<any>({});
   const [totalScore, setTotalScore] = useState(0);
   const [emdRecommendation, setEmdRecommendation] = useState(getEMDRecommendation(0));
@@ -38,21 +37,16 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   // Route-aware tab state
   const VALID_TABS = ['final-contract', 'acquisition', 'mom', 'am-approval'];
   const getTabFromUrl = () => {
-    const params = new URLSearchParams(search);
+    const params = new URLSearchParams(location.split('?')[1] || '');
     const tab = params.get('tab') || 'final-contract';
     return VALID_TABS.includes(tab) ? tab : 'final-contract';
   };
   const getPropertyIdFromUrl = () => {
-    const params = new URLSearchParams(search);
+    const params = new URLSearchParams(location.split('?')[1] || '');
     return params.get('propertyId');
-  };
-  const getIsNewFromUrl = () => {
-    const params = new URLSearchParams(search);
-    return params.get('new') === '1';
   };
   const [activeTab, setActiveTab] = useState(getTabFromUrl());
   const propertyIdFromUrl = getPropertyIdFromUrl();
-  const isNewProperty = getIsNewFromUrl();
 
   // Load property: if propertyId query param is present, load that specific
   // property (e.g. when navigating from the Pipeline page). Otherwise fall
@@ -68,25 +62,14 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       if (!userEmail) return null;
       return await fetch(`/api/users/${userEmail}/recent-property`).then(r => r.json());
     },
-    enabled: !isNewProperty && (!!userEmail || !!propertyIdFromUrl),
+    enabled: !!userEmail || !!propertyIdFromUrl,
     staleTime: 30000, // 30 seconds - cache stays fresh via manual updates
     refetchOnWindowFocus: false, // Don't refetch on window focus during active editing
     refetchOnMount: false // Don't refetch on mount - rely on cache kept fresh via setQueryData
   });
 
-  // Start a blank draft when navigating in with ?new=1
-  useEffect(() => {
-    if (isNewProperty) {
-      setCurrentPropertyId(null);
-      setPropertyData({});
-      setZillowData(null);
-      setLastSaved(null);
-    }
-  }, [isNewProperty]);
-
   // Hydrate form with existing property data
   useEffect(() => {
-    if (isNewProperty) return;
     console.log('[HYDRATION] useEffect triggered, existingProperty:', existingProperty);
     console.log('[HYDRATION] softAMChecklist in existingProperty:', existingProperty?.softAMChecklist);
     if (existingProperty && existingProperty.id) {
@@ -161,20 +144,22 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       }
     },
     onSuccess: (savedProperty) => {
+      console.log('[MUTATION-SUCCESS] Received savedProperty:', savedProperty);
+      console.log('[MUTATION-SUCCESS] softAMChecklist in response:', savedProperty?.softAMChecklist);
+      
       // Set property ID if this was a new property
       if (savedProperty?.id && !currentPropertyId) {
         setCurrentPropertyId(savedProperty.id);
       }
-
+      
       setLastSaved(new Date());
-      // Update the recent-property cache directly to keep it fresh without refetch
-      queryClient.setQueryData(['/api/users', userEmail, 'recent-property'], savedProperty);
-      // Keep the specific-property cache fresh so reopening this deal shows latest data
-      if (savedProperty?.id) {
-        queryClient.setQueryData(['/api/properties', savedProperty.id], savedProperty);
-      }
-      // Invalidate the My Deals list so its rows/KPIs reflect this save
-      queryClient.invalidateQueries({ queryKey: ['/api/users', userEmail, 'properties'] });
+      // Update query cache directly to keep it fresh without triggering refetch
+      const queryKey = ['/api/users', userEmail, 'recent-property'];
+      console.log('[MUTATION-SUCCESS] Setting query cache with key:', queryKey);
+      queryClient.setQueryData(queryKey, savedProperty);
+      console.log('[MUTATION-SUCCESS] Cache updated, verifying...');
+      const cached = queryClient.getQueryData(queryKey);
+      console.log('[MUTATION-SUCCESS] Cached value after update:', cached);
     }
   });
 
@@ -191,15 +176,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     if (tabFromUrl !== activeTab) {
       setActiveTab(tabFromUrl);
     }
-  }, [search]);
+  }, [location]);
 
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
-    const params = new URLSearchParams(search);
-    params.set('tab', newTab);
     const currentPath = location.split('?')[0];
-    setLocation(`${currentPath}?${params.toString()}`);
+    setLocation(`${currentPath}?tab=${newTab}`);
   };
 
   // Auto-save on data change
