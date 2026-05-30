@@ -1,21 +1,14 @@
 export const OFFER_STATUS_OPTIONS = [
   "Initial Contact Started",
-  "None",
-  "Working / Nurture",
-  "Back Up",
-  "Offer Sent",
-  "Contract Submitted",
   "Offer Terms Sent",
-  "In Negotiation",
-  "In Negotiations",
-  "Under Contract",
-  "Contract Assigned",
+  "Contract Submitted",
   "Offer Accepted",
-  "Acquired",
-  "Cancelled FEC",
-  "DO NOT USE",
+  "In Negotiations",
+  "Continue to Follow",
+  "Back Up",
   "Pass",
-  "Sold Others/Closed",
+  "Acquired",
+  "None",
 ] as const;
 
 export const EMD_STATUS_OPTIONS = [

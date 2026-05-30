@@ -68,10 +68,12 @@ const SOLAR = ['None', 'Owned', 'Leased', 'PPA', 'Financed'];
 const LOCKBOX = ['Supra', 'Combo', 'None', 'Other'];
 const POSSESSION = ['Seller', 'Buyer', 'Tenant', 'COE', 'COE + Days'];
 const INTENT = ['Wholesale', 'Fix & Flip', 'Buy & Hold', 'Development'];
-const EMD_TYPE = ['Cash', 'Wire', 'Check', 'Other'];
+const EMD_TYPE = ['Company Check', 'Cashiers Check', 'Wire To Escrow', 'Wire to Broker', 'TBD'];
+const EMD_TO_BE = ['Held un-cashed until bank approval', 'Deposited with Escrow', 'Wired to escrow upon bank approval'];
+const OFFER_TYPE = ['All Cash Offer', 'Hard Money', 'Conventional', 'FHA', '203K'];
 const EMD_STATUS = ['Assigned', 'Sent to Escrow', 'Received', 'Refunded', 'Released'];
-const TERMITE = ['Buyer', 'Seller', 'Split', 'Waived', 'N/A'];
-const CLOSING_COSTS = ['Each pays own', "Buyer pays seller's", 'Seller pays all', 'Buyer pays all'];
+const TERMITE = ['No Termite', 'Section 1 Termite Paid by Seller', 'Section 1&2 Termite Paid by Seller'];
+const CLOSING_COSTS = ['Buyer Pays', 'Seller Pays', 'Split', 'Per Contract'];
 const COST_RESPONSIBILITY = ['Each pays own', "Buyer pays seller's"];
 
 const DANGER_VALUE = "Buyer pays seller's";
@@ -243,13 +245,13 @@ export function EmdSection({
   return (
     <Card className={highlightIncomplete ? 'border-destructive' : undefined}>
       <CardHeader>
-        <CardTitle className={highlightIncomplete ? 'text-destructive' : undefined}>EMD</CardTitle>
+        <CardTitle className={highlightIncomplete ? 'text-destructive' : undefined}>Deposit</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="emdContractAmount">
-              EMD Contract Amount <span className="text-muted-foreground">(auto)</span>
+              Deposit Amount <span className="text-muted-foreground">(auto)</span>
             </Label>
             <Input
               id="emdContractAmount"
@@ -258,22 +260,22 @@ export function EmdSection({
               disabled
               data-testid="input-emdContractAmount"
             />
-            <p className="text-xs text-muted-foreground">Duplicated from Contract EMD Amount.</p>
+            <p className="text-xs text-muted-foreground">Duplicated from Contract Deposit Amount.</p>
           </div>
           <TextField label="Wire Instructions" field="wireInstructions" type="url" placeholder="https://..." {...ctx} />
-          <TextField label="EMD Approved By" field="emdApprovedBy" placeholder="Enter name..." {...ctx} />
-          <TextField label="EMD Sent By" field="emdSentBy" placeholder="Enter name..." {...ctx} />
-          <SelectField label="EMD Status" field="emdStatus" options={EMD_STATUS} {...ctx} />
-          <TextField label="EMD Status Date" field="emdStatusDate" type="date" {...ctx} />
-          <TextField label="EMD Amount Sent" field="emdAmountSent" type="number" placeholder="$" {...ctx} />
-          <TextField label="EMD Sent Date" field="emdSentDate" type="date" {...ctx} />
+          <TextField label="Deposit Approved By" field="emdApprovedBy" placeholder="Enter name..." {...ctx} />
+          <TextField label="Deposit Sent By" field="emdSentBy" placeholder="Enter name..." {...ctx} />
+          <SelectField label="Deposit Status" field="emdStatus" options={EMD_STATUS} {...ctx} />
+          <TextField label="Deposit Status Date" field="emdStatusDate" type="date" {...ctx} />
+          <TextField label="Deposit Amount Sent" field="emdAmountSent" type="number" placeholder="$" {...ctx} />
+          <TextField label="Deposit Sent Date" field="emdSentDate" type="date" {...ctx} />
           {isRefunded && (
             <>
               <TextField label="EMD Amount Refunded" field="emdAmountRefunded" type="number" placeholder="$" {...ctx} />
               <TextField label="EMD Amount Refunded Date" field="emdAmountRefundedDate" type="date" {...ctx} />
             </>
           )}
-          <AreaField label="EMD Notes" field="emdNotes" {...ctx} />
+          <AreaField label="Deposit Notes" field="emdNotes" {...ctx} />
         </div>
       </CardContent>
     </Card>
@@ -675,7 +677,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Contract Written Date" field="contractWrittenDate" type="date" {...ctx} />
             <TextField label="Offer Accepted Date" field="offerAcceptedDate" type="date" {...ctx} />
-            <DerivedDateField label="EMD Deadline" field="emdDeadline" hint="Offer Accepted Date + EMD Days (business days)" data={ctx.data} />
+            <DerivedDateField label="Deposit Deadline" field="emdDeadline" hint="Offer Accepted Date + Deposit Days (business days)" data={ctx.data} />
             <DerivedDateField label="DD Deadline" field="ddDeadline" hint="Offer Accepted Date + DD Days (calendar days)" data={ctx.data} />
             <DerivedDateField label="Contract Estimated COE" field="estimatedCoe" hint="Offer Accepted Date + Close of Escrow Days (calendar days)" data={ctx.data} />
             <TextField label="Seller to Deliver Report(s)/Disc Deadline" field="sellerToDeliverDeadline" type="date" {...ctx} />
@@ -713,15 +715,15 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Contract Purchase Price" field="contractPurchasePrice" type="number" placeholder="$" {...ctx} />
-            <TextField label="Contract EMD Days" field="contractEmdDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="Contract EMD Amount" field="contractEmdAmount" type="number" placeholder="$" {...ctx} />
-            <SelectField label="Contract EMD Type" field="contractEmdType" options={EMD_TYPE} {...ctx} />
-            <TextField label="Contract EMD To Be" field="contractEmdToBe" {...ctx} />
-            <TextField label="Contract Offer Type" field="contractOfferType" {...ctx} />
+            <TextField label="Contract Deposit Days" field="contractEmdDays" type="number" placeholder="days" {...ctx} />
+            <TextField label="Contract Deposit Amount" field="contractEmdAmount" type="number" placeholder="$" {...ctx} />
+            <SelectField label="Contract Deposit Type" field="contractEmdType" options={EMD_TYPE} {...ctx} />
+            <SelectField label="Contract Deposit To Be" field="contractEmdToBe" options={EMD_TO_BE} {...ctx} />
+            <SelectField label="Contract Offer Type" field="contractOfferType" options={OFFER_TYPE} {...ctx} />
             <TextField label="Contract Close of Escrow Days" field="contractCloseOfEscrowDays" type="number" placeholder="days" {...ctx} />
             <TextField label="Contract Appraisal Contingency Days" field="contractAppraisalContingencyDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="Contract Physical Inspection Contingency (Days)" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
-            <SelectField label="Contract Termite" field="contractTermite" options={TERMITE} {...ctx} />
+            <TextField label="Contract Inspection Period" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
+            <SelectField label="Contract Termite Inspection" field="contractTermite" options={TERMITE} {...ctx} />
             <TextField label="Contract Disclosures & Reports" field="contractDisclosuresReports" {...ctx} />
             <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger onDangerSelected={() => setShowClosingCostWarning(true)} {...ctx} />
             <TextField label="Contract Possession" field="contractPossession" {...ctx} />

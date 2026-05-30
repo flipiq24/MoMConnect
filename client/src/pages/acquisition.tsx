@@ -909,7 +909,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <Card className={attemptedApproval && !hardAMChecklistComplete ? 'border-destructive' : undefined}>
             <CardHeader>
               <CardTitle className={attemptedApproval && !hardAMChecklistComplete ? 'text-destructive' : undefined}>Hard AM Approval</CardTitle>
-              <p className="text-sm text-muted-foreground">Items review by C: Acquisition Manager</p>
+              <p className="text-sm text-muted-foreground">Items reviewed by Acquisition Manager</p>
             </CardHeader>
             <CardContent className="space-y-4">
               <CheckboxWithComment
