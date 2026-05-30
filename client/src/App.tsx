@@ -88,7 +88,7 @@ function Router() {
           <TopBar />
           <main className="flex-1 overflow-auto bg-background">
             <Switch>
-              <Route path="/">{() => <MyDeals userEmail={user.email} />}</Route>
+              <Route path="/">{() => <Acquisition userEmail={user.email} />}</Route>
               <Route path="/my-deals">{() => <MyDeals userEmail={user.email} />}</Route>
               <Route path="/acquisition">{() => <Acquisition userEmail={user.email} />}</Route>
               <Route path="/pipeline">{() => <Pipeline userEmail={user.email} />}</Route>
