@@ -15,8 +15,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment, 
-  StatusBadge, 
-  PropertySummary 
+  StatusBadge 
 } from '@/components/workflow-components';
 import FinalContractTermsTab from '@/components/final-contract-terms';
 
@@ -370,13 +369,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
         {/* MOM Meeting Tab */}
         <TabsContent value="mom" className="space-y-6">
-          <PropertySummary 
-            address={propertyData.address || 'No address'} 
-            arv={arv}
-            totalPoints={totalScore}
-            emdStatus={emdRecommendation.emd}
-          />
-
           <Card>
             <CardHeader>
               <CardTitle>MOM Meeting Review</CardTitle>
