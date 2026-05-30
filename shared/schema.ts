@@ -296,6 +296,7 @@ export interface FinalContractTerms {
   isRelistingProperty?: string;
   relistCommission?: string;
   listingAgentComments?: string;
+  listingAgentRepresentsBoth?: string;
   // Selling Agent Information
   sellingAgentFirstName?: string;
   sellingAgentLastName?: string;

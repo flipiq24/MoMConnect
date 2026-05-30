@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Save, Brain, Calculator, FileText, Loader2, TrendingUp, ScrollText } from 'lucide-react';
+import { Save, Calculator, FileText, Loader2, TrendingUp, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,12 +33,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
   const [zillowData, setZillowData] = useState<any>(null);
-  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
   
   // Route-aware tab state
+  const VALID_TABS = ['final-contract', 'acquisition', 'mom', 'am-approval'];
   const getTabFromUrl = () => {
     const params = new URLSearchParams(location.split('?')[1] || '');
-    return params.get('tab') || 'acquisition';
+    const tab = params.get('tab') || 'final-contract';
+    return VALID_TABS.includes(tab) ? tab : 'final-contract';
   };
   const getPropertyIdFromUrl = () => {
     const params = new URLSearchParams(location.split('?')[1] || '');
@@ -267,26 +268,22 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
       {/* Multi-tab Workflow */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="final-contract" data-testid="tab-final-contract">
+            <ScrollText className="w-4 h-4 mr-2" />
+            Final Contract Terms
+          </TabsTrigger>
           <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
             <FileText className="w-4 h-4 mr-2" />
             EMD Recommendation
           </TabsTrigger>
           <TabsTrigger value="mom" data-testid="tab-mom-meeting">
             <TrendingUp className="w-4 h-4 mr-2" />
-            MOM Meeting
+            Managers Meeting
           </TabsTrigger>
           <TabsTrigger value="am-approval" data-testid="tab-am-approval">
             <Calculator className="w-4 h-4 mr-2" />
             AM Hard Approval
-          </TabsTrigger>
-          <TabsTrigger value="ai-report" data-testid="tab-ai-report">
-            <Brain className="w-4 h-4 mr-2" />
-            AI Report
-          </TabsTrigger>
-          <TabsTrigger value="final-contract" data-testid="tab-final-contract">
-            <ScrollText className="w-4 h-4 mr-2" />
-            Final Contract Terms
           </TabsTrigger>
         </TabsList>
 
@@ -1205,105 +1202,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   Grant Final AM Approval
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* AI Report Tab */}
-        <TabsContent value="ai-report" className="space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>AI Analysis Report</CardTitle>
-              <Button
-                onClick={async () => {
-                  if (!propertyData.id) return;
-                  
-                  setIsGeneratingAnalysis(true);
-                  try {
-                    const response = await apiRequest('POST', `/api/properties/${propertyData.id}/analyze`);
-                    
-                    updateField('aiAnalysis', response);
-                    toast({
-                      title: "AI Analysis Generated",
-                      description: "Analysis complete. Review the recommendations below."
-                    });
-                  } catch (error: any) {
-                    toast({
-                      title: "Analysis Failed",
-                      description: error.message || "Failed to generate AI analysis.",
-                      variant: "destructive"
-                    });
-                  } finally {
-                    setIsGeneratingAnalysis(false);
-                  }
-                }}
-                disabled={isGeneratingAnalysis || !propertyData.id}
-                data-testid="button-generate-analysis"
-              >
-                {isGeneratingAnalysis ? (
-                  <>
-                    <span className="animate-spin mr-2">⟳</span>
-                    Generating...
-                  </>
-                ) : (
-                  'Generate AI Analysis'
-                )}
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {propertyData.aiAnalysis ? (
-                <div className="space-y-6">
-                  {/* Summary Section */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md" data-testid="section-ai-summary">
-                    <h3 className="font-semibold text-lg mb-2">Executive Summary</h3>
-                    <p className="text-sm">{propertyData.aiAnalysis.summary}</p>
-                  </div>
-
-                  {/* Strengths Section */}
-                  <div data-testid="section-ai-strengths">
-                    <h3 className="font-semibold text-lg mb-3 text-green-600 dark:text-green-400">✓ Key Strengths</h3>
-                    <ul className="space-y-2">
-                      {propertyData.aiAnalysis.strengths?.map((strength: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-green-600 dark:text-green-400 mt-0.5">•</span>
-                          <span className="text-sm">{strength}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Concerns Section */}
-                  <div data-testid="section-ai-concerns">
-                    <h3 className="font-semibold text-lg mb-3 text-yellow-600 dark:text-yellow-400">⚠ Key Concerns</h3>
-                    <ul className="space-y-2">
-                      {propertyData.aiAnalysis.concerns?.map((concern: string, idx: number) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-yellow-600 dark:text-yellow-400 mt-0.5">•</span>
-                          <span className="text-sm">{concern}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Recommendation Section */}
-                  <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-md border-l-4 border-indigo-500" data-testid="section-ai-recommendation">
-                    <h3 className="font-semibold text-lg mb-2">Final Recommendation</h3>
-                    <p className="text-sm">{propertyData.aiAnalysis.recommendation}</p>
-                  </div>
-
-                  {/* Regenerate Notice */}
-                  <p className="text-xs text-muted-foreground text-center">
-                    Analysis generated using GPT-5. Click "Generate AI Analysis" to refresh.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-12" data-testid="prompt-generate-analysis">
-                  <p className="text-muted-foreground mb-4">No AI analysis available yet.</p>
-                  <p className="text-sm text-muted-foreground">
-                    Click "Generate AI Analysis" above to get AI-powered insights and recommendations for this property.
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </TabsContent>

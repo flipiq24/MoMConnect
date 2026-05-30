@@ -51,6 +51,7 @@ function testId(key: string): string {
 
 // --- option sets ----------------------------------------------------------
 const YES_NO = ['Yes', 'No'];
+const LEAD_SOURCE = ['MLS', 'Seller', 'Direct', 'Wholesaler', 'Agent', 'Other'];
 const SALE_TYPE = ['Standard', 'Short Sale', 'Probate', 'REO', 'Auction', 'Trust', 'FSBO'];
 const OCCUPANT_TYPE = ['Owner Occupied', 'Tenant Occupied', 'Vacant'];
 const SOLAR = ['None', 'Owned', 'Leased', 'PPA', 'Financed'];
@@ -211,6 +212,14 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
 
   const ctx: Ctx = { data: data as Record<string, any>, update };
 
+  // Conditional-section flags
+  const saleType = ctx.data.saleType || '';
+  const isShortSale = saleType === 'Short Sale';
+  const isShortSaleOrProbate = saleType === 'Short Sale' || saleType === 'Probate';
+  const leadSource = ctx.data.leadSource || '';
+  const showSellerContact = leadSource === 'Seller' || leadSource === 'Direct';
+  const showSellingAgent = (ctx.data.listingAgentRepresentsBoth || '') === 'No';
+
   return (
     <div className="space-y-6">
       {/* General */}
@@ -222,10 +231,12 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Buyer Owner of Record" field="buyerOwnerOfRecord" {...ctx} />
             <TextField label="Offer Negotiator" field="offerNegotiator" {...ctx} />
-            <TextField label="Lead Source" field="leadSource" {...ctx} />
+            <SelectField label="Lead Source" field="leadSource" options={LEAD_SOURCE} {...ctx} />
             <TextField label="Transaction Coordinator" field="transactionCoordinator" {...ctx} />
             <SelectField label="Sale Type" field="saleType" options={SALE_TYPE} required {...ctx} />
-            <TextField label="Short Sale or Probate Status" field="shortSaleOrProbateStatus" {...ctx} />
+            {isShortSaleOrProbate && (
+              <TextField label="Short Sale or Probate Status" field="shortSaleOrProbateStatus" {...ctx} />
+            )}
             <SelectField label="Intent For Property" field="intentForProperty" options={INTENT} {...ctx} />
             <SelectField label="Occupant Type" field="occupantType" options={OCCUPANT_TYPE} {...ctx} />
             <TextField label="Seller of Record" field="sellerOfRecord" {...ctx} />
@@ -256,8 +267,12 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
             <DerivedDateField label="DD Deadline" field="ddDeadline" hint="Offer Accepted Date + DD Days (calendar days)" data={ctx.data} />
             <DerivedDateField label="Contract Estimated COE" field="estimatedCoe" hint="Offer Accepted Date + Close of Escrow Days (calendar days)" data={ctx.data} />
             <TextField label="Seller to Deliver Report(s)/Disc Deadline" field="sellerToDeliverDeadline" type="date" {...ctx} />
-            <TextField label="Short Sale / Probate Acceptance Date" field="shortSaleProbateAcceptanceDate" type="date" {...ctx} />
-            <TextField label="Short Sale Expiration Date" field="shortSaleExpirationDate" type="date" {...ctx} />
+            {isShortSaleOrProbate && (
+              <TextField label="Short Sale / Probate Acceptance Date" field="shortSaleProbateAcceptanceDate" type="date" {...ctx} />
+            )}
+            {isShortSale && (
+              <TextField label="Short Sale Expiration Date" field="shortSaleExpirationDate" type="date" {...ctx} />
+            )}
             <TextField label="Termite Inspection Requested Date" field="termiteInspectionRequestedDate" type="date" {...ctx} />
           </div>
         </CardContent>
@@ -271,6 +286,47 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Property File Link" field="propertyFileLink" type="url" placeholder="https://..." {...ctx} />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Final Acquisition Contract Terms + Other Cost or Credits */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Final Acquisition Contract Terms</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2">
+            <TextField label="Contract Purchase Price" field="contractPurchasePrice" type="number" placeholder="$" {...ctx} />
+            <TextField label="Contract EMD Days" field="contractEmdDays" type="number" placeholder="days" {...ctx} />
+            <TextField label="Contract EMD Amount" field="contractEmdAmount" type="number" placeholder="$" {...ctx} />
+            <SelectField label="Contract EMD Type" field="contractEmdType" options={EMD_TYPE} {...ctx} />
+            <TextField label="Contract EMD To Be" field="contractEmdToBe" {...ctx} />
+            <TextField label="Contract Offer Type" field="contractOfferType" {...ctx} />
+            <TextField label="Contract Close of Escrow Days" field="contractCloseOfEscrowDays" type="number" placeholder="days" {...ctx} />
+            <TextField label="Contract Appraisal Contingency Days" field="contractAppraisalContingencyDays" type="number" placeholder="days" {...ctx} />
+            <TextField label="Contract Physical Inspection Contingency (Days)" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
+            <SelectField label="Contract Termite" field="contractTermite" options={TERMITE} {...ctx} />
+            <TextField label="Contract Disclosures & Reports" field="contractDisclosuresReports" {...ctx} />
+            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger {...ctx} />
+            <TextField label="Contract Possession" field="contractPossession" {...ctx} />
+            <TextField label="Amended Contract Purchase Price" field="amendedContractPurchasePrice" type="number" placeholder="$" {...ctx} />
+            <AreaField label="Contract Remarks" field="contractRemarks" {...ctx} />
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-4">Other Cost or Credits</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="DD Days (drives DD Deadline)" field="ddDays" type="number" placeholder="days" {...ctx} />
+              <TextField label="TC Fee" field="tcFee" type="number" placeholder="$" {...ctx} />
+              <SelectField label="Title Cost" field="titleCost" options={COST_RESPONSIBILITY} danger {...ctx} />
+              <SelectField label="Escrow Cost" field="escrowCost" options={COST_RESPONSIBILITY} danger {...ctx} />
+              <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
+              <TextField label="IDX Other Cost" field="idxOtherCost" type="number" required placeholder="$" {...ctx} />
+              <TextField label="IDX Occupied Cost" field="idxOccupiedCost" type="number" required placeholder="$" {...ctx} />
+              <TextField label="IDX Taxes" field="idxTaxes" type="number" required placeholder="$" {...ctx} />
+              <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -292,43 +348,48 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
             <SelectField label="Is there an additional acquisition fee?" field="additionalAcquisitionFee" options={YES_NO} {...ctx} />
             <SelectField label="Is Acquisition Listing Agent re-listing property?" field="isRelistingProperty" options={YES_NO} {...ctx} />
             <TextField label="Commission offer to re-list property?" field="relistCommission" {...ctx} />
+            <SelectField label="Is Listing Agent representing buyer and seller?" field="listingAgentRepresentsBoth" options={YES_NO} {...ctx} />
             <AreaField label="Listing Agent Comments" field="listingAgentComments" {...ctx} />
           </div>
         </CardContent>
       </Card>
 
-      {/* Selling Agent Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Selling Agent Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="First Name" field="sellingAgentFirstName" required {...ctx} />
-            <TextField label="Last Name" field="sellingAgentLastName" {...ctx} />
-            <TextField label="Cell Phone" field="sellingAgentCellPhone" type="tel" {...ctx} />
-            <TextField label="Email Address" field="sellingAgentEmail" type="email" {...ctx} />
-            <TextField label="Office" field="sellingAgentOffice" {...ctx} />
-            <TextField label="Direct Office Phone" field="sellingAgentDirectPhone" type="tel" {...ctx} />
-            <TextField label="Office Mailing Address" field="sellingAgentOfficeAddress" {...ctx} />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Selling Agent Information — only when the listing agent is NOT representing both sides */}
+      {showSellingAgent && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Selling Agent Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="First Name" field="sellingAgentFirstName" required {...ctx} />
+              <TextField label="Last Name" field="sellingAgentLastName" {...ctx} />
+              <TextField label="Cell Phone" field="sellingAgentCellPhone" type="tel" {...ctx} />
+              <TextField label="Email Address" field="sellingAgentEmail" type="email" {...ctx} />
+              <TextField label="Office" field="sellingAgentOffice" {...ctx} />
+              <TextField label="Direct Office Phone" field="sellingAgentDirectPhone" type="tel" {...ctx} />
+              <TextField label="Office Mailing Address" field="sellingAgentOfficeAddress" {...ctx} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Seller Contact (FSBO) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Seller Contact (FSBO)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="First Name" field="sellerFirstName" {...ctx} />
-            <TextField label="Last Name" field="sellerLastName" {...ctx} />
-            <TextField label="Phone Number" field="sellerPhone" type="tel" {...ctx} />
-            <TextField label="Email Address" field="sellerEmail" type="email" {...ctx} />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Seller Contact (FSBO) — only when the lead source is Seller or Direct */}
+      {showSellerContact && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Seller Contact (FSBO)</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextField label="First Name" field="sellerFirstName" {...ctx} />
+              <TextField label="Last Name" field="sellerLastName" {...ctx} />
+              <TextField label="Phone Number" field="sellerPhone" type="tel" {...ctx} />
+              <TextField label="Email Address" field="sellerEmail" type="email" {...ctx} />
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Escrow Company Information */}
       <Card>
@@ -362,52 +423,6 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
             <TextField label="Title Company Phone #" field="titleCompanyPhone" type="tel" {...ctx} />
             <TextField label="Title Officer Email" field="titleOfficerEmail" type="email" {...ctx} />
             <TextField label="Title Company Mailing Address" field="titleCompanyAddress" {...ctx} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Final Acquisition Contract Terms */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Final Acquisition Contract Terms</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="Contract Purchase Price" field="contractPurchasePrice" type="number" placeholder="$" {...ctx} />
-            <TextField label="Contract EMD Days" field="contractEmdDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="Contract EMD Amount" field="contractEmdAmount" type="number" placeholder="$" {...ctx} />
-            <SelectField label="Contract EMD Type" field="contractEmdType" options={EMD_TYPE} {...ctx} />
-            <TextField label="Contract EMD To Be" field="contractEmdToBe" {...ctx} />
-            <TextField label="Contract Offer Type" field="contractOfferType" {...ctx} />
-            <TextField label="Contract Close of Escrow Days" field="contractCloseOfEscrowDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="Contract Appraisal Contingency Days" field="contractAppraisalContingencyDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="Contract Physical Inspection Contingency (Days)" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
-            <SelectField label="Contract Termite" field="contractTermite" options={TERMITE} {...ctx} />
-            <TextField label="Contract Disclosures & Reports" field="contractDisclosuresReports" {...ctx} />
-            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger {...ctx} />
-            <TextField label="Contract Possession" field="contractPossession" {...ctx} />
-            <TextField label="Amended Contract Purchase Price" field="amendedContractPurchasePrice" type="number" placeholder="$" {...ctx} />
-            <AreaField label="Contract Remarks" field="contractRemarks" {...ctx} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Other Cost or Credits */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Other Cost or Credits</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2">
-            <TextField label="DD Days (drives DD Deadline)" field="ddDays" type="number" placeholder="days" {...ctx} />
-            <TextField label="TC Fee" field="tcFee" type="number" placeholder="$" {...ctx} />
-            <SelectField label="Title Cost" field="titleCost" options={COST_RESPONSIBILITY} danger {...ctx} />
-            <SelectField label="Escrow Cost" field="escrowCost" options={COST_RESPONSIBILITY} danger {...ctx} />
-            <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
-            <TextField label="IDX Other Cost" field="idxOtherCost" type="number" required placeholder="$" {...ctx} />
-            <TextField label="IDX Occupied Cost" field="idxOccupiedCost" type="number" required placeholder="$" {...ctx} />
-            <TextField label="IDX Taxes" field="idxTaxes" type="number" required placeholder="$" {...ctx} />
-            <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
           </div>
         </CardContent>
       </Card>
