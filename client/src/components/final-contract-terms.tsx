@@ -525,9 +525,6 @@ export function InvestorBuyerSection({
           <IbText label="Buyer Corporate Documents" field="buyerCorporateDocs" placeholder="Link..." {...ctx} />
           <IbText label="LOC Documents" field="locDocuments" placeholder="Link..." {...ctx} />
           <IbText label="POF" field="pof" placeholder="Link..." {...ctx} />
-          <IbText label="Link to 365 Report" field="link365Report" placeholder="Link..." {...ctx} />
-          <IbText label="Investors Open/Closed Report" field="investorsOpenClosedReport" {...ctx} />
-          <IbText label="Link to Corporate Profile" field="linkCorporateProfile" placeholder="Link..." {...ctx} />
         </div>
 
         {/* Offer / EMD / TC */}

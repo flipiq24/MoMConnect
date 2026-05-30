@@ -388,9 +388,6 @@ export interface InvestorBuyerInfo {
   buyerCorporateDocs?: string;
   locDocuments?: string;
   pof?: string;
-  link365Report?: string;
-  investorsOpenClosedReport?: string;
-  linkCorporateProfile?: string;
   // Offer / EMD / TC
   investorEstimatedCoe?: string;
   investorOfferPrice?: string;
