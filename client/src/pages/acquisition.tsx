@@ -411,7 +411,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   value={propertyData.physicalInspectionContingency || ''}
                   onValueChange={(value) => {
                     updateField('physicalInspectionContingency', value);
-                    updateField('contingencyRemovalDate', new Date().toISOString().split('T')[0]);
                   }}
                 >
                   <SelectTrigger data-testid="select-physical-inspection">
@@ -426,7 +425,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contingencyRemovalDate">Contingency Removal Date (auto-stamped)</Label>
+                <Label htmlFor="contingencyRemovalDate">Contingency Removal Date</Label>
                 <Input
                   id="contingencyRemovalDate"
                   type="date"
