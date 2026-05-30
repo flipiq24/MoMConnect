@@ -269,7 +269,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
             <FileText className="w-4 h-4 mr-2" />
-            Acquisition Associate
+            EMD Recommendation
           </TabsTrigger>
           <TabsTrigger value="mom" data-testid="tab-mom-meeting">
             <TrendingUp className="w-4 h-4 mr-2" />
