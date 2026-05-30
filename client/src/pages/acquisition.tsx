@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, Link } from 'wouter';
 import { Save, Calculator, FileText, Loader2, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -326,6 +326,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           )}
         </div>
         <div className="flex items-center gap-3">
+          <Link
+            href="/pipeline"
+            className="text-sm text-primary underline-offset-2 hover:underline"
+            data-testid="link-pipeline-report"
+          >
+            Pipeline Report
+          </Link>
           {!savePropertyMutation.isPending && lastSaved ? (
             <p className="text-sm text-muted-foreground" data-testid="text-saved-time">
               Saved {lastSaved.toLocaleTimeString()}
