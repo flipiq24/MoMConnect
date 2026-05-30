@@ -178,6 +178,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     }
   }, [location]);
 
+  // Redirect away from the EMD tab when it is hidden (non-wholesale intent)
+  useEffect(() => {
+    if (!isWholesaleIntent && activeTab === 'acquisition') {
+      handleTabChange('final-contract');
+    }
+  }, [isWholesaleIntent, activeTab]);
+
   // Update URL when tab changes
   const handleTabChange = (newTab: string) => {
     setActiveTab(newTab);
@@ -266,15 +273,17 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
       {/* Multi-tab Workflow */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${isWholesaleIntent ? 'grid-cols-3' : 'grid-cols-2'}`}>
           <TabsTrigger value="final-contract" data-testid="tab-final-contract">
             <ScrollText className="w-4 h-4 mr-2" />
             Final Contract Terms
           </TabsTrigger>
-          <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
-            <FileText className="w-4 h-4 mr-2" />
-            EMD Recommendation
-          </TabsTrigger>
+          {isWholesaleIntent && (
+            <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
+              <FileText className="w-4 h-4 mr-2" />
+              EMD Recommendation
+            </TabsTrigger>
+          )}
           <TabsTrigger value="am-approval" data-testid="tab-am-approval">
             <Calculator className="w-4 h-4 mr-2" />
             AM Hard Approval
@@ -282,6 +291,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         </TabsList>
 
         {/* Acquisition Associate Tab */}
+        {isWholesaleIntent && (
         <TabsContent value="acquisition" className="space-y-6">
           {/* Current Risk Score */}
           <Card className={`border-2 ${totalScore >= 0 ? 'border-green-500' : 'border-red-500'}`}>
@@ -352,6 +362,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             </CardContent>
           </Card>
         </TabsContent>
+        )}
 
         {/* AM Hard Approval Tab */}
         <TabsContent value="am-approval" className="space-y-6">
