@@ -362,6 +362,8 @@ export interface FinalContractTerms {
   // Wholesale EMD
   emdContractAmount?: string; // duplicated from Contract EMD Amount
   wireInstructions?: string;
+  emdApprovedBy?: string;
+  emdSentBy?: string;
   emdStatus?: string;
   emdStatusDate?: string;
   emdAmountSent?: string;

@@ -241,7 +241,7 @@ export function EmdSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Wholesale EMD</CardTitle>
+        <CardTitle>EMD</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-2">
@@ -259,6 +259,8 @@ export function EmdSection({
             <p className="text-xs text-muted-foreground">Duplicated from Contract EMD Amount.</p>
           </div>
           <TextField label="Wire Instructions" field="wireInstructions" type="url" placeholder="https://..." {...ctx} />
+          <TextField label="EMD Approved By" field="emdApprovedBy" placeholder="Enter name..." {...ctx} />
+          <TextField label="EMD Sent By" field="emdSentBy" placeholder="Enter name..." {...ctx} />
           <SelectField label="EMD Status" field="emdStatus" options={EMD_STATUS} {...ctx} />
           <TextField label="EMD Status Date" field="emdStatusDate" type="date" {...ctx} />
           <TextField label="EMD Amount Sent" field="emdAmountSent" type="number" placeholder="$" {...ctx} />
