@@ -366,14 +366,16 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
         {/* AM Hard Approval Tab */}
         <TabsContent value="am-approval" className="space-y-6">
-          <div className="bg-yellow-100 dark:bg-yellow-900/20 border-2 border-yellow-400 rounded-md p-4" data-testid="alert-final-review">
-            <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
-              ⚠️ Final Review Required
-            </p>
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              Acquisition Manager must validate all information before final approval. Current Score: {totalScore} points ({emdRecommendation.emd})
-            </p>
-          </div>
+          {isWholesaleIntent && (
+            <div className="bg-yellow-100 dark:bg-yellow-900/20 border-2 border-yellow-400 rounded-md p-4" data-testid="alert-final-review">
+              <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                ⚠️ Final Review Required
+              </p>
+              <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                Acquisition Manager must validate all information before final approval. Current Score: {totalScore} points ({emdRecommendation.emd})
+              </p>
+            </div>
+          )}
 
           <Card>
             <CardHeader>
