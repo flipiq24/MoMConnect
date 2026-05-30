@@ -370,10 +370,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         {/* MOM Meeting Tab */}
         <TabsContent value="mom" className="space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>MOM Meeting Review</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 pt-6">
               <div className="space-y-2">
                 <Label>Disposition Manager Approval Status</Label>
                 <Select
