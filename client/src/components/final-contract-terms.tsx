@@ -230,18 +230,20 @@ function DerivedDateField({
 export function EmdSection({
   data,
   onChange,
+  highlightIncomplete = false,
 }: {
   data: Record<string, any>;
   onChange: (next: FinalContractTerms) => void;
+  highlightIncomplete?: boolean;
 }) {
   const update = (patch: Partial<FinalContractTerms>) =>
     onChange({ ...(data as FinalContractTerms), ...patch });
   const ctx: Ctx = { data, update };
   const isRefunded = (data.emdStatus || '') === 'Refunded';
   return (
-    <Card>
+    <Card className={highlightIncomplete ? 'border-destructive' : undefined}>
       <CardHeader>
-        <CardTitle>EMD</CardTitle>
+        <CardTitle className={highlightIncomplete ? 'text-destructive' : undefined}>EMD</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 md:grid-cols-2">

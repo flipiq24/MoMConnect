@@ -54,6 +54,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   };
   const [activeTab, setActiveTab] = useState(getTabFromUrl());
   const [showChecklistDialog, setShowChecklistDialog] = useState(false);
+  const [attemptedApproval, setAttemptedApproval] = useState(false);
   const propertyIdFromUrl = getPropertyIdFromUrl();
 
   // Load property: if propertyId query param is present, load that specific
@@ -200,6 +201,51 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   const hardAMChecklistComplete = HARD_AM_CHECKLIST_KEYS.every(
     (k) => propertyData.hardAMChecklist?.[k]?.checked === true
   );
+
+  // Soft AM Approval checklist completeness.
+  const SOFT_AM_CHECKLIST_KEYS = [
+    'readAgentComments',
+    'reviewGoogleMaps',
+    'reviewRequiredInspections',
+    'usabilityOfLot',
+    'possibleZoning',
+    'reviewPictures',
+    'lookOutForAdditions',
+    'readSystemNotes',
+    'agentCallsBackup',
+    'confirmOfferStatus',
+    'verifyOfferTerms',
+    'investmentAnalysisConfirmed',
+    'confirmROICalculations',
+    'confirmRepairCost',
+    'confirmOfferTermsMatchContract',
+    'additionalVerification',
+  ];
+  const softAMChecklistComplete = SOFT_AM_CHECKLIST_KEYS.every(
+    (k) => propertyData.softAMChecklist?.[k]?.checked === true
+  );
+
+  // EMD section completeness (key fields that must be filled in).
+  const EMD_REQUIRED_FIELDS = [
+    'wireInstructions',
+    'emdApprovedBy',
+    'emdSentBy',
+    'emdStatus',
+    'emdStatusDate',
+    'emdAmountSent',
+    'emdSentDate',
+  ];
+  const emdComplete = EMD_REQUIRED_FIELDS.every((f) => {
+    const v = propertyData.finalContractTerms?.[f];
+    return v !== undefined && v !== null && String(v).trim() !== '';
+  });
+
+  // Sections that must be filled out before the contingency removal can be approved.
+  const missingSections = [
+    !softAMChecklistComplete && 'Soft AM Approval Checklist',
+    !emdComplete && 'EMD',
+    !hardAMChecklistComplete && 'Hard AM Approval Checklist',
+  ].filter(Boolean) as string[];
 
   // Sync tab with URL
   useEffect(() => {
@@ -418,7 +464,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 <Select
                   value={propertyData.physicalInspectionContingency || ''}
                   onValueChange={(value) => {
-                    if (value === 'Approved' && !hardAMChecklistComplete) {
+                    if (value === 'Approved' && missingSections.length > 0) {
+                      setAttemptedApproval(true);
                       setShowChecklistDialog(true);
                       return;
                     }
@@ -484,12 +531,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <EmdSection
             data={propertyData.finalContractTerms ?? {}}
             onChange={(next) => updateField('finalContractTerms', next)}
+            highlightIncomplete={attemptedApproval && !emdComplete}
           />
 
           {/* Soft AM Approval Checklist */}
-          <Card>
+          <Card className={attemptedApproval && !softAMChecklistComplete ? 'border-destructive' : undefined}>
             <CardHeader>
-              <CardTitle>Soft AM Approval Checklist</CardTitle>
+              <CardTitle className={attemptedApproval && !softAMChecklistComplete ? 'text-destructive' : undefined}>Soft AM Approval Checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <CheckboxWithComment
@@ -858,9 +906,9 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           </Card>
 
           {/* Hard AM Approval Checklist */}
-          <Card>
+          <Card className={attemptedApproval && !hardAMChecklistComplete ? 'border-destructive' : undefined}>
             <CardHeader>
-              <CardTitle>Hard AM Approval</CardTitle>
+              <CardTitle className={attemptedApproval && !hardAMChecklistComplete ? 'text-destructive' : undefined}>Hard AM Approval</CardTitle>
               <p className="text-sm text-muted-foreground">Items review by C: Acquisition Manager</p>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -1169,12 +1217,17 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       <AlertDialog open={showChecklistDialog} onOpenChange={setShowChecklistDialog}>
         <AlertDialogContent data-testid="dialog-hard-am-incomplete">
           <AlertDialogHeader>
-            <AlertDialogTitle>Complete the Hard AM Approval checklist</AlertDialogTitle>
+            <AlertDialogTitle>Missing information</AlertDialogTitle>
             <AlertDialogDescription>
               Before you can approve the contingency removal, please fill out all of
-              the Hard AM Approval checklist items at the bottom of this tab.
+              the required information in these sections:
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <ul className="list-disc pl-6 space-y-1 text-sm text-destructive" data-testid="list-missing-sections">
+            {missingSections.map((s) => (
+              <li key={s} data-testid={`missing-section-${s.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}>{s}</li>
+            ))}
+          </ul>
           <AlertDialogFooter>
             <AlertDialogAction data-testid="button-checklist-dialog-ok">
               Got it
