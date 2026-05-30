@@ -68,6 +68,7 @@ export const properties = pgTable("properties", {
   // Hard AM Approval (Images 5-6)
   physicalInspectionContingency: text("physical_inspection_contingency"),
   contingencyRemovalDate: timestamp("contingency_removal_date"),
+  contingencyRemovalApprovedBy: text("contingency_removal_approved_by"),
   wholesaleStatus: text("wholesale_status"),
   hardAMChecklist: jsonb("hard_am_checklist"),
   zoningDetails: text("zoning_details"),

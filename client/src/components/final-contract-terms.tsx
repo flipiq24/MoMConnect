@@ -1,8 +1,18 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import type { FinalContractTerms } from '@shared/schema';
 
 interface FinalContractTermsTabProps {
@@ -82,16 +92,20 @@ function TextField({
   type = 'text',
   required = false,
   placeholder,
+  danger = false,
+  dangerMessage,
 }: Ctx & {
   label: string;
   field: keyof FinalContractTerms;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  danger?: boolean;
+  dangerMessage?: string;
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={field as string}>
+      <Label htmlFor={field as string} className={danger ? 'text-destructive' : undefined}>
         {label}
         {required && <span className="text-destructive"> *</span>}
       </Label>
@@ -100,9 +114,15 @@ function TextField({
         type={type}
         value={data[field as string] || ''}
         placeholder={placeholder}
+        className={danger ? 'border-destructive text-destructive' : undefined}
         onChange={(e) => update({ [field]: e.target.value } as Partial<FinalContractTerms>)}
         data-testid={`input-${testId(field as string)}`}
       />
+      {danger && dangerMessage && (
+        <p className="text-xs text-destructive" data-testid={`warning-${testId(field as string)}`}>
+          {dangerMessage}
+        </p>
+      )}
     </div>
   );
 }
@@ -134,12 +154,14 @@ function SelectField({
   update,
   required = false,
   danger = false,
+  onDangerSelected,
 }: Ctx & {
   label: string;
   field: keyof FinalContractTerms;
   options: string[];
   required?: boolean;
   danger?: boolean;
+  onDangerSelected?: () => void;
 }) {
   const value = data[field as string] || '';
   const isDanger = danger && value === DANGER_VALUE;
@@ -149,7 +171,13 @@ function SelectField({
         {label}
         {required && <span className="text-destructive"> *</span>}
       </Label>
-      <Select value={value} onValueChange={(v) => update({ [field]: v } as Partial<FinalContractTerms>)}>
+      <Select
+        value={value}
+        onValueChange={(v) => {
+          update({ [field]: v } as Partial<FinalContractTerms>);
+          if (v === DANGER_VALUE) onDangerSelected?.();
+        }}
+      >
         <SelectTrigger
           id={field as string}
           className={isDanger ? 'border-destructive text-destructive' : undefined}
@@ -267,6 +295,11 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
   const showSellerContact = leadSource === 'Seller' || leadSource === 'Direct';
   const showSellingAgent = (ctx.data.listingAgentRepresentsBoth || '') === 'No';
 
+  // When the buyer is paying the seller's closing costs, the Escrow Cost must be
+  // entered as a dollar amount and a confirmation dialog is shown.
+  const buyerPaysSellersClosing = (ctx.data.contractClosingCosts || '') === DANGER_VALUE;
+  const [showClosingCostWarning, setShowClosingCostWarning] = useState(false);
+
   return (
     <div className="space-y-6">
       {/* General */}
@@ -357,7 +390,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
             <TextField label="Contract Physical Inspection Contingency (Days)" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
             <SelectField label="Contract Termite" field="contractTermite" options={TERMITE} {...ctx} />
             <TextField label="Contract Disclosures & Reports" field="contractDisclosuresReports" {...ctx} />
-            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger {...ctx} />
+            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger onDangerSelected={() => setShowClosingCostWarning(true)} {...ctx} />
             <TextField label="Contract Possession" field="contractPossession" {...ctx} />
             <TextField label="Amended Contract Purchase Price" field="amendedContractPurchasePrice" type="number" placeholder="$" {...ctx} />
             <AreaField label="Contract Remarks" field="contractRemarks" {...ctx} />
@@ -369,7 +402,20 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
               <TextField label="DD Days (drives DD Deadline)" field="ddDays" type="number" placeholder="days" {...ctx} />
               <TextField label="TC Fee" field="tcFee" type="number" placeholder="$" {...ctx} />
               <SelectField label="Title Cost" field="titleCost" options={COST_RESPONSIBILITY} danger {...ctx} />
-              <SelectField label="Escrow Cost" field="escrowCost" options={COST_RESPONSIBILITY} danger {...ctx} />
+              <TextField
+                label="Escrow Cost"
+                field="escrowCost"
+                type="number"
+                placeholder="$"
+                required={buyerPaysSellersClosing}
+                danger={buyerPaysSellersClosing}
+                dangerMessage={
+                  buyerPaysSellersClosing
+                    ? "Warning: buyer is paying the seller's cost. Enter the escrow cost amount and make sure it reflects in the Investment Analysis."
+                    : undefined
+                }
+                {...ctx}
+              />
               <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
               <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
             </div>
@@ -472,6 +518,23 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showClosingCostWarning} onOpenChange={setShowClosingCostWarning}>
+        <AlertDialogContent data-testid="dialog-closing-cost-warning">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Warning: buyer is paying the seller's cost</AlertDialogTitle>
+            <AlertDialogDescription>
+              Make sure this reflects in the Investment Analysis. Enter the Escrow Cost dollar
+              amount in "Other Cost or Credits" below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction data-testid="button-acknowledge-closing-cost">
+              I understand
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

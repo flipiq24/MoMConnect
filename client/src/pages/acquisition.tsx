@@ -383,10 +383,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>Physical Inspection Contingency Removal</Label>
+                <Label>Contingency Removal</Label>
                 <Select
                   value={propertyData.physicalInspectionContingency || ''}
-                  onValueChange={(value) => updateField('physicalInspectionContingency', value)}
+                  onValueChange={(value) => {
+                    updateField('physicalInspectionContingency', value);
+                    updateField('contingencyRemovalDate', new Date().toISOString().split('T')[0]);
+                  }}
                 >
                   <SelectTrigger data-testid="select-physical-inspection">
                     <SelectValue placeholder="Approved" />
@@ -400,13 +403,24 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="contingencyRemovalDate">Removal of Contingencies Hard Approval Date</Label>
+                <Label htmlFor="contingencyRemovalDate">Contingency Removal Date (auto-stamped)</Label>
                 <Input
                   id="contingencyRemovalDate"
                   type="date"
                   value={propertyData.contingencyRemovalDate || ''}
                   onChange={(e) => updateField('contingencyRemovalDate', e.target.value || null)}
                   data-testid="input-contingency-date"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contingencyRemovalApprovedBy">Contingency Removal Approved By (Name)</Label>
+                <Input
+                  id="contingencyRemovalApprovedBy"
+                  value={propertyData.contingencyRemovalApprovedBy || ''}
+                  onChange={(e) => updateField('contingencyRemovalApprovedBy', e.target.value)}
+                  placeholder="Enter name..."
+                  data-testid="input-contingency-approved-by"
                 />
               </div>
 
