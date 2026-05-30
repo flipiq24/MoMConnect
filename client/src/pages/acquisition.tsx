@@ -1257,6 +1257,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <FinalContractTermsTab
             data={propertyData.finalContractTerms ?? {}}
             onChange={(next) => updateField('finalContractTerms', next)}
+            propertyData={propertyData}
+            updateProperty={updateField}
           />
         </TabsContent>
       </Tabs>

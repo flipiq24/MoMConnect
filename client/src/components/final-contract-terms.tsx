@@ -18,6 +18,8 @@ import type { FinalContractTerms } from '@shared/schema';
 interface FinalContractTermsTabProps {
   data: FinalContractTerms;
   onChange: (next: FinalContractTerms) => void;
+  propertyData?: Record<string, any>;
+  updateProperty?: (field: string, value: any) => void;
 }
 
 // --- date helpers ---------------------------------------------------------
@@ -278,7 +280,122 @@ export function EmdSection({
   );
 }
 
-export default function FinalContractTermsTab({ data, onChange }: FinalContractTermsTabProps) {
+interface WholesaleDetailsSectionProps {
+  data: Record<string, any>;
+  update: (field: string, value: any) => void;
+}
+
+export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectionProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Wholesale Details</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Disposition Manager Approval Status</Label>
+          <Select
+            value={data.dmApprovalStatus || ''}
+            onValueChange={(value) => update('dmApprovalStatus', value)}
+          >
+            <SelectTrigger data-testid="select-wd-dm-approval-status">
+              <SelectValue placeholder="Approved Ready to send" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Approved Ready to send">Approved Ready to send</SelectItem>
+              <SelectItem value="Needs Review">Needs Review</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="wd-dmConfidencePercent" title="Your confidence level (0-100%) that you will successfully assign this wholesale contract to a buyer">DM's Confidence of Assignment by %</Label>
+          <Input
+            id="wd-dmConfidencePercent"
+            type="number"
+            value={data.dmConfidencePercent ?? ''}
+            onChange={(e) => update('dmConfidencePercent', e.target.value)}
+            placeholder="80"
+            data-testid="input-wd-dm-confidence"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="wd-dmConfidenceExplanation" title="Explain the rationale behind your confidence percentage">DM Confidence Explanation</Label>
+          <Textarea
+            id="wd-dmConfidenceExplanation"
+            value={data.dmConfidenceExplanation || ''}
+            onChange={(e) => update('dmConfidenceExplanation', e.target.value)}
+            placeholder="Explanation..."
+            rows={4}
+            data-testid="textarea-wd-dm-explanation"
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label title="Identify who conducted the comparable sales analysis. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper comps analysis">Who drove the comps?</Label>
+            <Select
+              value={data.compsDriver || ''}
+              onValueChange={(value) => update('compsDriver', value)}
+            >
+              <SelectTrigger data-testid="select-wd-comps-driver">
+                <SelectValue placeholder="Field Analyst" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Field Analyst">Field Analyst</SelectItem>
+                <SelectItem value="Acquisition Manager">Acquisition Manager</SelectItem>
+                <SelectItem value="External Appraiser">External Appraiser</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label title="Identify who conducted the physical property inspection. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper inspection">Who Inspected Property?</Label>
+            <Select
+              value={data.propertyInspector || ''}
+              onValueChange={(value) => update('propertyInspector', value)}
+            >
+              <SelectTrigger data-testid="select-wd-property-inspector">
+                <SelectValue placeholder="Field Analyst" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Field Analyst">Field Analyst</SelectItem>
+                <SelectItem value="Acquisition Manager">Acquisition Manager</SelectItem>
+                <SelectItem value="Third Party Inspector">Third Party Inspector</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="wd-wholesalingDetail">Detail description for wholesaling</Label>
+          <Textarea
+            id="wd-wholesalingDetail"
+            value={data.wholesalingDetailDescription || ''}
+            onChange={(e) => update('wholesalingDetailDescription', e.target.value)}
+            rows={6}
+            data-testid="textarea-wd-wholesaling-detail"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="wd-wholesalingShort">Short description for wholesaling</Label>
+          <Textarea
+            id="wd-wholesalingShort"
+            value={data.wholesalingShortDescription || ''}
+            onChange={(e) => update('wholesalingShortDescription', e.target.value)}
+            rows={4}
+            data-testid="textarea-wd-wholesaling-short"
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function FinalContractTermsTab({ data, onChange, propertyData, updateProperty }: FinalContractTermsTabProps) {
   // Any change recomputes the auto-derived deadline dates so they stay in sync.
   const update = (patch: Partial<FinalContractTerms>) => {
     const merged: Record<string, any> = { ...data, ...patch };
@@ -301,6 +418,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
   const leadSource = ctx.data.leadSource || '';
   const showSellerContact = leadSource === 'Seller' || leadSource === 'Direct';
   const showSellingAgent = (ctx.data.listingAgentRepresentsBoth || '') === 'No';
+  const isWholesale = (ctx.data.intentForProperty || '') === 'Wholesale';
 
   // When the buyer is paying the seller's closing costs, the Escrow Cost must be
   // entered as a dollar amount and a confirmation dialog is shown.
@@ -341,6 +459,11 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
           </div>
         </CardContent>
       </Card>
+
+      {/* Wholesale Details */}
+      {isWholesale && propertyData && updateProperty && (
+        <WholesaleDetailsSection data={propertyData} update={updateProperty} />
+      )}
 
       {/* Milestones */}
       <Card>
