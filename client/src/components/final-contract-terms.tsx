@@ -59,6 +59,7 @@ const LOCKBOX = ['Supra', 'Combo', 'None', 'Other'];
 const POSSESSION = ['Seller', 'Buyer', 'Tenant', 'COE', 'COE + Days'];
 const INTENT = ['Wholesale', 'Fix & Flip', 'Buy & Hold', 'Development'];
 const EMD_TYPE = ['Cash', 'Wire', 'Check', 'Other'];
+const EMD_STATUS = ['Assigned', 'Sent to Escrow', 'Received', 'Refunded', 'Released'];
 const TERMITE = ['Buyer', 'Seller', 'Split', 'Waived', 'N/A'];
 const CLOSING_COSTS = ['Each pays own', "Buyer pays seller's", 'Seller pays all', 'Buyer pays all'];
 const COST_RESPONSIBILITY = ['Each pays own', "Buyer pays seller's"];
@@ -196,6 +197,52 @@ function DerivedDateField({
   );
 }
 
+// --- shared Wholesale EMD section (used in both Final Contract Terms and AM
+//     Hard Approval) so the data stays in sync across tabs -------------------
+export function EmdSection({
+  data,
+  onChange,
+}: {
+  data: Record<string, any>;
+  onChange: (next: FinalContractTerms) => void;
+}) {
+  const update = (patch: Partial<FinalContractTerms>) =>
+    onChange({ ...(data as FinalContractTerms), ...patch });
+  const ctx: Ctx = { data, update };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Wholesale EMD</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="emdContractAmount">
+              EMD Contract Amount <span className="text-muted-foreground">(auto)</span>
+            </Label>
+            <Input
+              id="emdContractAmount"
+              type="number"
+              value={data.contractEmdAmount || ''}
+              disabled
+              data-testid="input-emdContractAmount"
+            />
+            <p className="text-xs text-muted-foreground">Duplicated from Contract EMD Amount.</p>
+          </div>
+          <TextField label="Wire Instructions" field="wireInstructions" type="url" placeholder="https://..." {...ctx} />
+          <SelectField label="EMD Status" field="emdStatus" options={EMD_STATUS} {...ctx} />
+          <TextField label="EMD Status Date" field="emdStatusDate" type="date" {...ctx} />
+          <TextField label="EMD Amount Sent" field="emdAmountSent" type="number" placeholder="$" {...ctx} />
+          <TextField label="EMD Sent Date" field="emdSentDate" type="date" {...ctx} />
+          <TextField label="EMD Amount Refunded" field="emdAmountRefunded" type="number" placeholder="$" {...ctx} />
+          <TextField label="EMD Amount Refunded Date" field="emdAmountRefundedDate" type="date" {...ctx} />
+          <AreaField label="EMD Notes" field="emdNotes" {...ctx} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function FinalContractTermsTab({ data, onChange }: FinalContractTermsTabProps) {
   // Any change recomputes the auto-derived deadline dates so they stay in sync.
   const update = (patch: Partial<FinalContractTerms>) => {
@@ -276,6 +323,9 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
           </div>
         </CardContent>
       </Card>
+
+      {/* Wholesale EMD */}
+      <EmdSection data={data as Record<string, any>} onChange={onChange} />
 
       {/* Documents */}
       <Card>

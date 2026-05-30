@@ -16,7 +16,7 @@ import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment 
 } from '@/components/workflow-components';
-import FinalContractTermsTab from '@/components/final-contract-terms';
+import FinalContractTermsTab, { EmdSection } from '@/components/final-contract-terms';
 
 interface AcquisitionProps {
   userEmail: string;
@@ -429,6 +429,12 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               )}
             </CardContent>
           </Card>
+
+          {/* Wholesale EMD */}
+          <EmdSection
+            data={propertyData.finalContractTerms ?? {}}
+            onChange={(next) => updateField('finalContractTerms', next)}
+          />
 
           {/* Soft AM Approval Checklist */}
           <Card>

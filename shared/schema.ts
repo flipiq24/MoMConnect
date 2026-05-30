@@ -348,4 +348,14 @@ export interface FinalContractTerms {
   escrowCost?: string;
   otherCostOrCreditsOutside?: string;
   explanationOtherCostsCredits?: string;
+  // Wholesale EMD
+  emdContractAmount?: string; // duplicated from Contract EMD Amount
+  wireInstructions?: string;
+  emdStatus?: string;
+  emdStatusDate?: string;
+  emdAmountSent?: string;
+  emdSentDate?: string;
+  emdAmountRefunded?: string;
+  emdAmountRefundedDate?: string;
+  emdNotes?: string;
 }
