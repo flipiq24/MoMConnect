@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertPropertySchema, updatePropertySchema } from "@shared/schema";
 import { calculateTotalScore, getEMDRecommendation } from "@shared/scoring";
-import { savePropertyToSheet } from "./lib/googleSheets";
+import { savePropertyToSheet, exportPipelineToSheet } from "./lib/googleSheets";
 import { generatePropertyAnalysis } from "./lib/openai";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -195,6 +195,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error: any) {
       console.error('Google Sheets save error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Export the pipeline view to a new Google spreadsheet
+  app.post("/api/pipeline/export-to-sheets", async (req, res) => {
+    try {
+      const { title, headers, rows } = req.body;
+      if (!Array.isArray(headers) || !Array.isArray(rows)) {
+        return res
+          .status(400)
+          .json({ error: "headers and rows are required" });
+      }
+      const result = await exportPipelineToSheet(
+        typeof title === "string" && title.trim() ? title : "MoM Pipeline Report",
+        headers,
+        rows,
+      );
+      res.json(result);
+    } catch (error: any) {
+      console.error("Pipeline export error:", error);
       res.status(500).json({ error: error.message });
     }
   });

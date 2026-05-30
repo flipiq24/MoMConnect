@@ -51,6 +51,47 @@ export async function getUncachableGoogleSheetClient() {
   return google.sheets({ version: 'v4', auth: oauth2Client });
 }
 
+// Export the pipeline view to a brand new Google spreadsheet.
+// The frontend supplies the headers (matching the pipeline data table) and the
+// row data so the sheet mirrors exactly what the user sees.
+export async function exportPipelineToSheet(
+  title: string,
+  headers: string[],
+  rows: (string | number)[][],
+) {
+  const sheets = await getUncachableGoogleSheetClient();
+
+  const createResponse = await sheets.spreadsheets.create({
+    requestBody: {
+      properties: { title },
+      sheets: [
+        {
+          properties: {
+            title: 'Pipeline',
+            gridProperties: { frozenRowCount: 1 },
+          },
+        },
+      ],
+    },
+  });
+
+  const spreadsheetId = createResponse.data.spreadsheetId!;
+  const spreadsheetUrl =
+    createResponse.data.spreadsheetUrl ||
+    `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range: 'Pipeline!A1',
+    valueInputOption: 'RAW',
+    requestBody: {
+      values: [headers, ...rows],
+    },
+  });
+
+  return { spreadsheetId, spreadsheetUrl };
+}
+
 // Save property data to Google Sheets
 export async function savePropertyToSheet(propertyData: any) {
   try {

@@ -1,8 +1,18 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Circle } from 'lucide-react';
+import { Loader2, Circle, FileSpreadsheet, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -79,7 +89,10 @@ function RequiredDot({ show }: { show: boolean }) {
 
 export default function Pipeline({ userEmail }: PipelineProps) {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [filterMode, setFilterMode] = useState<FilterMode>('escrow');
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportUrl, setReportUrl] = useState<string | null>(null);
 
   const propertiesQueryKey = ['/api/users', userEmail, 'properties'];
 
@@ -199,32 +212,6 @@ export default function Pipeline({ userEmail }: PipelineProps) {
     { label: 'NOTES', span: 1, tone: 'bg-slate-200 dark:bg-slate-800 text-slate-900 dark:text-slate-100' },
   ];
 
-  const columnHeaders = [
-    '#',
-    'Property Address',
-    'City',
-    'Risk Score',
-    'EMD Rec',
-    'Offer Status',
-    'List Price',
-    'Acq. Purchase Price',
-    'Est. COE',
-    'Acq. Associate',
-    'Listing Agent',
-    'Agent Phone',
-    'Agent Email',
-    'DD Deadline',
-    'DD Status',
-    'DD Approved By',
-    'DD Approval Date',
-    'EMD Amount',
-    'EMD Due Date',
-    'EMD Status',
-    'Assignment Status',
-    'Confidence to Assign',
-    'Notes',
-  ];
-
   const activeEscrowCount = useMemo(
     () =>
       properties.filter((p) =>
@@ -241,6 +228,57 @@ export default function Pipeline({ userEmail }: PipelineProps) {
     if (parts.length >= 2) return parts[1];
     return '';
   };
+
+  // Single source of truth for the pipeline report: column header + how to read
+  // each cell. The table header and the Google Sheets export both use these
+  // labels so the report headings always match the data table.
+  const reportColumns: {
+    header: string;
+    value: (row: Property, idx: number) => string | number;
+  }[] = [
+    { header: '#', value: (_r, idx) => idx + 1 },
+    { header: 'Property Address', value: (r) => (r.address ?? '') as string },
+    { header: 'City', value: (r) => extractCity(r.address) },
+    { header: 'Risk Score', value: (r) => r.totalScore ?? 0 },
+    { header: 'EMD Rec', value: (r) => r.emdRecommendation ?? '' },
+    { header: 'Offer Status', value: (r) => getValue(r, 'offerStatus') as string },
+    { header: 'List Price', value: (r) => formatMoney(getValue(r, 'listPrice') as any) },
+    { header: 'Acq. Purchase Price', value: (r) => formatMoney(getValue(r, 'purchasePrice') as any) },
+    { header: 'Est. COE', value: (r) => getValue(r, 'estCOE') as string },
+    { header: 'Acq. Associate', value: (r) => getValue(r, 'acqAssociate') as string },
+    { header: 'Listing Agent', value: (r) => getValue(r, 'listingAgent') as string },
+    { header: 'Agent Phone', value: (r) => getValue(r, 'agentPhone') as string },
+    { header: 'Agent Email', value: (r) => getValue(r, 'agentEmail') as string },
+    { header: 'DD Deadline', value: (r) => getValue(r, 'ddDeadline') as string },
+    { header: 'DD Status', value: (r) => getValue(r, 'ddStatus') as string },
+    { header: 'DD Approved By', value: (r) => getValue(r, 'ddApprovedBy') as string },
+    { header: 'DD Approval Date', value: (r) => getValue(r, 'ddApprovalDate') as string },
+    { header: 'EMD Amount', value: (r) => formatMoney(getValue(r, 'emdAmount') as any) },
+    { header: 'EMD Due Date', value: (r) => getValue(r, 'emdDueDate') as string },
+    { header: 'EMD Status', value: (r) => getValue(r, 'emdStatus') as string },
+    { header: 'Assignment Status', value: (r) => getValue(r, 'assignmentStatus') as string },
+    { header: 'Confidence to Assign', value: (r) => getValue(r, 'confidenceToAssign') as string },
+    { header: 'Notes', value: (r) => getValue(r, 'wholesalingShortDescription') as string },
+  ];
+
+  const columnHeaders = reportColumns.map((c) => c.header);
+
+  const exportMutation = useMutation({
+    mutationFn: async () => {
+      return (await apiRequest('POST', '/api/pipeline/export-to-sheets', {
+        title: `MoM Pipeline Report — ${today}`,
+        headers: columnHeaders,
+        rows: filtered.map((row, idx) => reportColumns.map((c) => c.value(row, idx))),
+      })) as { spreadsheetId: string; spreadsheetUrl: string };
+    },
+    onSuccess: (data) => setReportUrl(data.spreadsheetUrl),
+    onError: (err: any) =>
+      toast({
+        title: 'Export failed',
+        description: err?.message || 'Could not export to Google Sheets.',
+        variant: 'destructive',
+      }),
+  });
 
   return (
     <div className="space-y-6">
@@ -269,19 +307,96 @@ export default function Pipeline({ userEmail }: PipelineProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">View:</span>
-        <Select value={filterMode} onValueChange={(v) => setFilterMode(v as FilterMode)}>
-          <SelectTrigger className="w-72" data-testid="select-filter-mode">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="escrow">Offer Accepted &amp; Contract Assigned</SelectItem>
-            <SelectItem value="allEscrow">All escrow deals</SelectItem>
-            <SelectItem value="all">All properties</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">View:</span>
+          <Select value={filterMode} onValueChange={(v) => setFilterMode(v as FilterMode)}>
+            <SelectTrigger className="w-72" data-testid="select-filter-mode">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="escrow">Offer Accepted &amp; Contract Assigned</SelectItem>
+              <SelectItem value="allEscrow">All escrow deals</SelectItem>
+              <SelectItem value="all">All properties</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setReportUrl(null);
+            setReportOpen(true);
+          }}
+          data-testid="button-pipeline-report"
+        >
+          <FileSpreadsheet className="w-4 h-4" />
+          Pipeline Report
+        </Button>
       </div>
+
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent data-testid="dialog-pipeline-report">
+          <DialogHeader>
+            <DialogTitle>Pipeline Report</DialogTitle>
+            <DialogDescription>
+              Export the {filtered.length} deal{filtered.length === 1 ? '' : 's'} in
+              the current view to a new Google spreadsheet. The columns match the
+              pipeline table exactly.
+            </DialogDescription>
+          </DialogHeader>
+
+          {reportUrl ? (
+            <div className="rounded-md border p-4 text-sm" data-testid="text-report-success">
+              <p className="mb-3">Your report is ready.</p>
+              <a
+                href={reportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-primary underline-offset-2 hover:underline"
+                data-testid="link-report-spreadsheet"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Open Google Spreadsheet
+              </a>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              A fresh spreadsheet will be created and a link to open it will appear
+              here.
+            </p>
+          )}
+
+          <DialogFooter>
+            {reportUrl ? (
+              <Button
+                variant="outline"
+                onClick={() => setReportOpen(false)}
+                data-testid="button-report-close"
+              >
+                Close
+              </Button>
+            ) : (
+              <Button
+                onClick={() => exportMutation.mutate()}
+                disabled={exportMutation.isPending || filtered.length === 0}
+                data-testid="button-export-sheets"
+              >
+                {exportMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Exporting…
+                  </>
+                ) : (
+                  <>
+                    <FileSpreadsheet className="w-4 h-4" />
+                    Export to Google Sheets
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardContent className="p-0">
