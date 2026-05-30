@@ -16,7 +16,7 @@ import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment 
 } from '@/components/workflow-components';
-import FinalContractTermsTab, { EmdSection } from '@/components/final-contract-terms';
+import FinalContractTermsTab, { EmdSection, WholesaleDetailsSection } from '@/components/final-contract-terms';
 
 interface AcquisitionProps {
   userEmail: string;
@@ -382,6 +382,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
             </CardContent>
           </Card>
+
+          <WholesaleDetailsSection data={propertyData} update={updateField} />
         </TabsContent>
         )}
 
@@ -1142,114 +1144,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             </CardContent>
           </Card>
 
-          {/* Managers Meeting */}
-          {isWholesaleIntent && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Managers Meeting</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Disposition Manager Approval Status</Label>
-                <Select
-                  value={propertyData.dmApprovalStatus || ''}
-                  onValueChange={(value) => updateField('dmApprovalStatus', value)}
-                >
-                  <SelectTrigger data-testid="select-dm-approval-status">
-                    <SelectValue placeholder="Approved Ready to send" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Approved Ready to send">Approved Ready to send</SelectItem>
-                    <SelectItem value="Needs Review">Needs Review</SelectItem>
-                    <SelectItem value="Rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dmConfidencePercent" title="Your confidence level (0-100%) that you will successfully assign this wholesale contract to a buyer">DM's Confidence of Assignment by %</Label>
-                <Input
-                  id="dmConfidencePercent"
-                  type="number"
-                  value={propertyData.dmConfidencePercent || ''}
-                  onChange={(e) => updateField('dmConfidencePercent', e.target.value)}
-                  placeholder="80"
-                  data-testid="input-dm-confidence"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dmConfidenceExplanation" title="Explain the rationale behind your confidence percentage">DM Confidence Explanation</Label>
-                <Textarea
-                  id="dmConfidenceExplanation"
-                  value={propertyData.dmConfidenceExplanation || ''}
-                  onChange={(e) => updateField('dmConfidenceExplanation', e.target.value)}
-                  placeholder="Explanation..."
-                  rows={4}
-                  data-testid="textarea-dm-explanation"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label title="Identify who conducted the comparable sales analysis. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper comps analysis">Who drove the comps?</Label>
-                  <Select
-                    value={propertyData.compsDriver || ''}
-                    onValueChange={(value) => updateField('compsDriver', value)}
-                  >
-                    <SelectTrigger data-testid="select-comps-driver">
-                      <SelectValue placeholder="Field Analyst" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Field Analyst">Field Analyst</SelectItem>
-                      <SelectItem value="Acquisition Manager">Acquisition Manager</SelectItem>
-                      <SelectItem value="External Appraiser">External Appraiser</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label title="Identify who conducted the physical property inspection. CRITICAL: If 'No one, we are flying blind' - DO NOT PROCEED without proper inspection">Who Inspected Property?</Label>
-                  <Select
-                    value={propertyData.propertyInspector || ''}
-                    onValueChange={(value) => updateField('propertyInspector', value)}
-                  >
-                    <SelectTrigger data-testid="select-property-inspector">
-                      <SelectValue placeholder="Field Analyst" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Field Analyst">Field Analyst</SelectItem>
-                      <SelectItem value="Acquisition Manager">Acquisition Manager</SelectItem>
-                      <SelectItem value="Third Party Inspector">Third Party Inspector</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="wholesalingDetail">Detail description for wholesaling</Label>
-                <Textarea
-                  id="wholesalingDetail"
-                  value={propertyData.wholesalingDetailDescription || ''}
-                  onChange={(e) => updateField('wholesalingDetailDescription', e.target.value)}
-                  rows={6}
-                  data-testid="textarea-wholesaling-detail"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="wholesalingShort">Short description for wholesaling</Label>
-                <Textarea
-                  id="wholesalingShort"
-                  value={propertyData.wholesalingShortDescription || ''}
-                  onChange={(e) => updateField('wholesalingShortDescription', e.target.value)}
-                  rows={4}
-                  data-testid="textarea-wholesaling-short"
-                />
-              </div>
-            </CardContent>
-          </Card>
-          )}
         </TabsContent>
 
         {/* Final Contract Terms Tab */}
@@ -1257,8 +1151,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <FinalContractTermsTab
             data={propertyData.finalContractTerms ?? {}}
             onChange={(next) => updateField('finalContractTerms', next)}
-            propertyData={propertyData}
-            updateProperty={updateField}
           />
         </TabsContent>
       </Tabs>

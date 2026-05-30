@@ -18,8 +18,6 @@ import type { FinalContractTerms } from '@shared/schema';
 interface FinalContractTermsTabProps {
   data: FinalContractTerms;
   onChange: (next: FinalContractTerms) => void;
-  propertyData?: Record<string, any>;
-  updateProperty?: (field: string, value: any) => void;
 }
 
 // --- date helpers ---------------------------------------------------------
@@ -395,7 +393,7 @@ export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectio
   );
 }
 
-export default function FinalContractTermsTab({ data, onChange, propertyData, updateProperty }: FinalContractTermsTabProps) {
+export default function FinalContractTermsTab({ data, onChange }: FinalContractTermsTabProps) {
   // Any change recomputes the auto-derived deadline dates so they stay in sync.
   const update = (patch: Partial<FinalContractTerms>) => {
     const merged: Record<string, any> = { ...data, ...patch };
@@ -418,7 +416,6 @@ export default function FinalContractTermsTab({ data, onChange, propertyData, up
   const leadSource = ctx.data.leadSource || '';
   const showSellerContact = leadSource === 'Seller' || leadSource === 'Direct';
   const showSellingAgent = (ctx.data.listingAgentRepresentsBoth || '') === 'No';
-  const isWholesale = (ctx.data.intentForProperty || '') === 'Wholesale';
 
   // When the buyer is paying the seller's closing costs, the Escrow Cost must be
   // entered as a dollar amount and a confirmation dialog is shown.
@@ -456,11 +453,6 @@ export default function FinalContractTermsTab({ data, onChange, propertyData, up
           </div>
         </CardContent>
       </Card>
-
-      {/* Wholesale Details */}
-      {isWholesale && propertyData && updateProperty && (
-        <WholesaleDetailsSection data={propertyData} update={updateProperty} />
-      )}
 
       {/* Milestones */}
       <Card>
