@@ -287,6 +287,58 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
         {/* Acquisition Associate Tab */}
         <TabsContent value="acquisition" className="space-y-6">
+          <Card>
+            <CardContent className="space-y-4 pt-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                {Object.entries(scoringRules).map(([field, options]) => (
+                  <div key={field} className="space-y-2">
+                    <Label htmlFor={field} title={`Select ${field} option. Points shown in parentheses affect total risk score`}>{field}</Label>
+                    <Select
+                      value={propertyData[field === 'Source' ? 'source' :
+                             field === 'Is purchase price over 1M' ? 'purchasePriceRange' :
+                             field === 'Is value subject to permits' ? 'valueSubjectToPermits' :
+                             field === 'Is value subject to ADU?' ? 'valueSubjectToADU' :
+                             field === 'Is wholesale price higher than listing asking price?' ? 'wholesalePriceVsAsking' :
+                             field === 'ARV Confidence' ? 'arvConfidence' :
+                             field === 'ROI for time/Effort' ? 'roiForTimeEffort' :
+                             field === 'Zoning' ? 'zoning' :
+                             field === 'Rehab Level' ? 'rehabLevel' :
+                             field === 'Area Desirability' ? 'areaDesirability' :
+                             field === 'Obsolesces/Issues' ? 'obsolescencesIssues' :
+                             field === 'Occupancy' ? 'occupancy' : field] || ''}
+                      onValueChange={(value) => {
+                        const dbField = field === 'Source' ? 'source' :
+                                       field === 'Is purchase price over 1M' ? 'purchasePriceRange' :
+                                       field === 'Is value subject to permits' ? 'valueSubjectToPermits' :
+                                       field === 'Is value subject to ADU?' ? 'valueSubjectToADU' :
+                                       field === 'Is wholesale price higher than listing asking price?' ? 'wholesalePriceVsAsking' :
+                                       field === 'ARV Confidence' ? 'arvConfidence' :
+                                       field === 'ROI for time/Effort' ? 'roiForTimeEffort' :
+                                       field === 'Zoning' ? 'zoning' :
+                                       field === 'Rehab Level' ? 'rehabLevel' :
+                                       field === 'Area Desirability' ? 'areaDesirability' :
+                                       field === 'Obsolesces/Issues' ? 'obsolescencesIssues' :
+                                       field === 'Occupancy' ? 'occupancy' : field;
+                        updateField(dbField, value);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(options).map(([option, points]) => (
+                          <SelectItem key={option} value={option}>
+                            {option} ({points > 0 ? '+' : ''}{points} pts)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Current Risk Score */}
           <Card className={`border-2 ${totalScore >= 0 ? 'border-green-500' : 'border-red-500'}`}>
             <CardContent className="pt-6">
