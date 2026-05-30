@@ -84,12 +84,12 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     }
   }, [isNewProperty]);
 
-  // Hydrate form with existing property data
+  // Hydrate form with existing property data. Only hydrate when a genuinely
+  // different property loads — not on every cache update — otherwise the
+  // autosave -> setQueryData -> re-hydrate cycle becomes an infinite loop.
   useEffect(() => {
     if (isNewProperty) return;
-    console.log('[HYDRATION] useEffect triggered, existingProperty:', existingProperty);
-    console.log('[HYDRATION] softAMChecklist in existingProperty:', existingProperty?.softAMChecklist);
-    if (existingProperty && existingProperty.id) {
+    if (existingProperty && existingProperty.id && existingProperty.id !== currentPropertyId) {
       setCurrentPropertyId(existingProperty.id);
       setPropertyData({
         ...existingProperty,
@@ -108,14 +108,13 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         obsolescencesIssues: existingProperty.obsolescencesIssues || '',
         occupancy: existingProperty.occupancy || ''
       });
-      console.log('[HYDRATION] setPropertyData called with softAMChecklist:', existingProperty.softAMChecklist);
-      
+
       if (existingProperty.zillowData) {
         setZillowData(existingProperty.zillowData);
       }
       setLastSaved(new Date(existingProperty.updatedAt));
     }
-  }, [existingProperty]);
+  }, [existingProperty, currentPropertyId, isNewProperty]);
 
   // Calculate score whenever property data changes
   useEffect(() => {
@@ -141,8 +140,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   // Auto-save property mutation
   const savePropertyMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('[MUTATION] Input data.softAMChecklist:', data.softAMChecklist);
-      
       const propertyPayload = {
         ...data,
         email: userEmail,
@@ -150,9 +147,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
         emdRecommendation: emdRecommendation.emd,
         successChance: emdRecommendation.chance
       };
-
-      console.log('[MUTATION] propertyPayload.softAMChecklist:', propertyPayload.softAMChecklist);
-      console.log('[MUTATION] Full propertyPayload:', propertyPayload);
 
       if (currentPropertyId) {
         return await apiRequest('PATCH', `/api/properties/${currentPropertyId}`, propertyPayload);

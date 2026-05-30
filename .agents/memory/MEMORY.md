@@ -1,1 +1,2 @@
 - [wouter query params](wouter-query-params.md) — wouter v3 useLocation is pathname-only; read query strings with useSearch(), not location.split('?').
+- [acquisition autosave loop](acquisition-autosave-loop.md) — hydration effect that reads the same cache its autosave writes → infinite loop; gate hydration on id change.
