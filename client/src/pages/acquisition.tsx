@@ -295,6 +295,26 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
         {/* Acquisition Associate Tab */}
         <TabsContent value="acquisition" className="space-y-6">
+          {/* Current Risk Score */}
+          <Card className={`border-2 ${totalScore >= 0 ? 'border-green-500' : 'border-red-500'}`}>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-lg ${totalScore >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <Calculator className={`w-6 h-6 ${totalScore >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Current Risk Score: {totalScore >= 0 ? '+' : ''}{totalScore} points ({totalScore >= 0 ? 'Positive' : 'Negative'})</p>
+                  <p className="font-medium">
+                    EMD Recommendation: <span className={totalScore >= 0 ? 'text-green-600' : 'text-red-600'}>{emdRecommendation.emd}</span> ({emdRecommendation.chance}% success rate)
+                  </p>
+                </div>
+                <Button variant="outline" className="ml-auto" data-testid="button-setup-instructions">
+                  Setup Instructions
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="space-y-4 pt-6">
               <div className="grid gap-4 md:grid-cols-2">
@@ -343,26 +363,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                     </Select>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Current Risk Score */}
-          <Card className={`border-2 ${totalScore >= 0 ? 'border-green-500' : 'border-red-500'}`}>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-4">
-                <div className={`p-3 rounded-lg ${totalScore >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <Calculator className={`w-6 h-6 ${totalScore >= 0 ? 'text-green-600' : 'text-red-600'}`} />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Current Risk Score: {totalScore >= 0 ? '+' : ''}{totalScore} points ({totalScore >= 0 ? 'Positive' : 'Negative'})</p>
-                  <p className="font-medium">
-                    EMD Recommendation: <span className={totalScore >= 0 ? 'text-green-600' : 'text-red-600'}>{emdRecommendation.emd}</span> ({emdRecommendation.chance}% success rate)
-                  </p>
-                </div>
-                <Button variant="outline" className="ml-auto" data-testid="button-setup-instructions">
-                  Setup Instructions
-                </Button>
               </div>
             </CardContent>
           </Card>
