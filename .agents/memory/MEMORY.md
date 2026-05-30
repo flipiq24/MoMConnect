@@ -1,2 +1,3 @@
 - [wouter query params](wouter-query-params.md) — wouter v3 useLocation is pathname-only; read query strings with useSearch(), not location.split('?').
 - [acquisition autosave loop](acquisition-autosave-loop.md) — hydration effect that reads the same cache its autosave writes → infinite loop; gate hydration on id change.
+- [preview iframe localStorage crash](preview-iframe-localstorage.md) — unguarded localStorage throws in the partitioned Replit preview iframe → page blanks; always try/catch storage.

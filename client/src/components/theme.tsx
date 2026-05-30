@@ -11,12 +11,19 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
+function readStoredTheme(): Theme {
+  // localStorage can throw (SecurityError) inside sandboxed / storage-partitioned
+  // iframes such as the Replit preview. Never let that crash the app.
+  try {
     if (typeof window === "undefined") return "light";
-    const stored = window.localStorage.getItem("mom-theme");
-    return stored === "dark" ? "dark" : "light";
-  });
+    return window.localStorage.getItem("mom-theme") === "dark" ? "dark" : "light";
+  } catch {
+    return "light";
+  }
+}
+
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setTheme] = useState<Theme>(readStoredTheme);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -25,7 +32,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } else {
       root.classList.remove("dark");
     }
-    window.localStorage.setItem("mom-theme", theme);
+    try {
+      window.localStorage.setItem("mom-theme", theme);
+    } catch {
+      // ignore: storage unavailable in this context
+    }
   }, [theme]);
 
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
