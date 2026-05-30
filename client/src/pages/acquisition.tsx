@@ -302,7 +302,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           {isWholesaleIntent && (
             <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
               <FileText className="w-4 h-4 mr-2" />
-              EMD Recommendation
+              Wholesale Details
             </TabsTrigger>
           )}
           <TabsTrigger value="am-approval" data-testid="tab-am-approval">
