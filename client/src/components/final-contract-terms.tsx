@@ -291,6 +291,24 @@ export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectio
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
+          <Label>Wholesale Status</Label>
+          <Select
+            value={data.wholesaleStatus || ''}
+            onValueChange={(value) => update('wholesaleStatus', value)}
+          >
+            <SelectTrigger data-testid="select-wd-wholesale-status">
+              <SelectValue placeholder="Assigned/wholesale" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Assigned/wholesale">Assigned/wholesale</SelectItem>
+              <SelectItem value="Pending Assignment">Pending Assignment</SelectItem>
+              <SelectItem value="On Hold">On Hold</SelectItem>
+              <SelectItem value="Cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-2">
           <Label>Disposition Manager Approval Status</Label>
           <Select
             value={data.dmApprovalStatus || ''}
