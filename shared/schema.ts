@@ -97,6 +97,9 @@ export const properties = pgTable("properties", {
   confidenceToAssign: text("confidence_to_assign"),
   notes: text("notes"),
 
+  // Final Contract Terms (Acquisition Information tab) - stored as a single JSONB blob
+  finalContractTerms: jsonb("final_contract_terms"),
+
   // Zillow/property data
   zillowData: jsonb("zillow_data"),
   
@@ -244,4 +247,108 @@ export interface CityChecklist {
   permits?: boolean;
   codeEnforcement?: boolean;
   zoning?: boolean;
+}
+
+// Final Contract Terms (Acquisition Information tab)
+// All fields optional; stored together in the finalContractTerms JSONB column.
+export interface FinalContractTerms {
+  // General
+  buyerOwnerOfRecord?: string;
+  offerNegotiator?: string;
+  leadSource?: string;
+  transactionCoordinator?: string;
+  saleType?: string;
+  shortSaleOrProbateStatus?: string;
+  intentForProperty?: string;
+  occupantType?: string;
+  sellerOfRecord?: string;
+  possessionAtCoe?: string;
+  solarPanels?: string;
+  lockBoxType?: string;
+  lockboxLocation?: string;
+  accessCombo?: string;
+  accessComments?: string;
+  fullyExecutedRpa?: string;
+  hardApprovalToStartWholesale?: string;
+  acquisitionInfoComments?: string;
+  // Milestones
+  startProjectDate?: string;
+  contractWrittenDate?: string;
+  offerAcceptedDate?: string;
+  estimatedCoe?: string; // auto-calculated
+  ddDeadline?: string; // auto-calculated
+  emdDeadline?: string; // auto-calculated
+  sellerToDeliverDeadline?: string;
+  shortSaleProbateAcceptanceDate?: string;
+  shortSaleExpirationDate?: string;
+  termiteInspectionRequestedDate?: string;
+  // Documents
+  propertyFileLink?: string;
+  // Listing Agent Information
+  listingAgentFirstName?: string;
+  listingAgentLastName?: string;
+  listingAgentCellPhone?: string;
+  listingAgentEmail?: string;
+  listingAgentOffice?: string;
+  listingAgentOfficeAddress?: string;
+  listingAgentDirectPhone?: string;
+  additionalAcquisitionFee?: string;
+  isRelistingProperty?: string;
+  relistCommission?: string;
+  listingAgentComments?: string;
+  // Selling Agent Information
+  sellingAgentFirstName?: string;
+  sellingAgentLastName?: string;
+  sellingAgentCellPhone?: string;
+  sellingAgentEmail?: string;
+  sellingAgentOffice?: string;
+  sellingAgentOfficeAddress?: string;
+  sellingAgentDirectPhone?: string;
+  // Seller Contact (FSBO)
+  sellerFirstName?: string;
+  sellerLastName?: string;
+  sellerPhone?: string;
+  sellerEmail?: string;
+  // Escrow Company Information
+  escrowCompany?: string;
+  escrowOfficer?: string;
+  escrowNumber?: string;
+  escrowOfficerDirectPhone?: string;
+  escrowOfficerEmail?: string;
+  escrowCompanyPhone?: string;
+  escrowCompanyAddress?: string;
+  // Title Company Information
+  titleCompany?: string;
+  titleOfficer?: string;
+  titleOrderNumber?: string;
+  titleOfficerDirectPhone?: string;
+  titleCompanyPhone?: string;
+  titleOfficerEmail?: string;
+  titleCompanyAddress?: string;
+  // Final Acquisition Contract Terms
+  contractPurchasePrice?: string;
+  contractEmdDays?: string;
+  contractEmdAmount?: string;
+  contractEmdType?: string;
+  contractEmdToBe?: string;
+  contractOfferType?: string;
+  contractCloseOfEscrowDays?: string;
+  contractAppraisalContingencyDays?: string;
+  contractPhysicalInspectionContingency?: string;
+  contractTermite?: string;
+  contractDisclosuresReports?: string;
+  contractClosingCosts?: string;
+  contractPossession?: string;
+  amendedContractPurchasePrice?: string;
+  contractRemarks?: string;
+  // Other Cost or Credits
+  ddDays?: string; // used to auto-calc the DD Deadline
+  tcFee?: string;
+  titleCost?: string;
+  escrowCost?: string;
+  otherCostOrCreditsOutside?: string;
+  explanationOtherCostsCredits?: string;
+  idxOtherCost?: string;
+  idxOccupiedCost?: string;
+  idxTaxes?: string;
 }

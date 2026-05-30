@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Save, Brain, Calculator, FileText, Loader2, TrendingUp } from 'lucide-react';
+import { Save, Brain, Calculator, FileText, Loader2, TrendingUp, ScrollText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ import {
   StatusBadge, 
   PropertySummary 
 } from '@/components/workflow-components';
+import FinalContractTermsTab from '@/components/final-contract-terms';
 
 interface AcquisitionProps {
   userEmail: string;
@@ -266,7 +267,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
       {/* Multi-tab Workflow */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="acquisition" data-testid="tab-acquisition-associate">
             <FileText className="w-4 h-4 mr-2" />
             EMD Recommendation
@@ -282,6 +283,10 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <TabsTrigger value="ai-report" data-testid="tab-ai-report">
             <Brain className="w-4 h-4 mr-2" />
             AI Report
+          </TabsTrigger>
+          <TabsTrigger value="final-contract" data-testid="tab-final-contract">
+            <ScrollText className="w-4 h-4 mr-2" />
+            Final Contract Terms
           </TabsTrigger>
         </TabsList>
 
@@ -1301,6 +1306,14 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Final Contract Terms Tab */}
+        <TabsContent value="final-contract" className="space-y-6">
+          <FinalContractTermsTab
+            data={propertyData.finalContractTerms ?? {}}
+            onChange={(next) => updateField('finalContractTerms', next)}
+          />
         </TabsContent>
       </Tabs>
     </div>
