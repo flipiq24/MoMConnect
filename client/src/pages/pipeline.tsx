@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { Loader2, Circle, FileSpreadsheet, ExternalLink } from 'lucide-react';
+import { Loader2, Circle, FileSpreadsheet, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -283,6 +283,16 @@ export default function Pipeline({ userEmail }: PipelineProps) {
   return (
     <div className="space-y-6">
       <div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mb-2 -ml-2"
+          onClick={() => setLocation('/')}
+          data-testid="button-back"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back
+        </Button>
         <h1 className="text-2xl font-bold" data-testid="text-pipeline-title">
           Acquisition Pipeline — Active Deals in Escrow
         </h1>
