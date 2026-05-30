@@ -14,8 +14,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Property } from '@shared/schema';
 import { 
-  CheckboxWithComment, 
-  StatusBadge 
+  CheckboxWithComment 
 } from '@/components/workflow-components';
 import FinalContractTermsTab from '@/components/final-contract-terms';
 
@@ -227,14 +226,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
       {/* Top Status Bar */}
       <div className="flex items-center justify-between gap-4 p-4 bg-card border rounded-md">
         <div className="flex items-center gap-6">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Points:</p>
-            <p className={`text-2xl font-bold ${totalScore >= 0 ? 'text-green-600' : 'text-red-600'}`} data-testid="text-header-total-points">
-              {totalScore >= 0 ? '+' : ''}{totalScore}
-            </p>
-          </div>
-          <StatusBadge status={emdRecommendation.emd} />
-          
           {/* All-in Cost/ARV% Calculator */}
           {arv > 0 && (
             <div className={`px-4 py-2 rounded-md border-2 ${allInStatus.border} ${allInStatus.bg}`}>
