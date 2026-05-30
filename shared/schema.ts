@@ -101,6 +101,9 @@ export const properties = pgTable("properties", {
   // Final Contract Terms (Acquisition Information tab) - stored as a single JSONB blob
   finalContractTerms: jsonb("final_contract_terms"),
 
+  // Investor / Buyer Information (shown when wholesale status is Assigned/wholesale) - JSONB blob
+  investorBuyerInfo: jsonb("investor_buyer_info"),
+
   // Zillow/property data
   zillowData: jsonb("zillow_data"),
   
@@ -370,4 +373,45 @@ export interface FinalContractTerms {
   emdAmountRefunded?: string;
   emdAmountRefundedDate?: string;
   emdNotes?: string;
+}
+
+// Investor / Buyer Information (shown when wholesale status is Assigned/wholesale)
+// All fields optional; stored together in the investorBuyerInfo JSONB column.
+export interface InvestorBuyerInfo {
+  // Buyer / Investor
+  buyerFirstLast?: string;
+  investorBuyerCell?: string;
+  investorEmail?: string;
+  buyingEntityName?: string;
+  primarySigner?: string;
+  secondarySigner?: string;
+  buyerCorporateDocs?: string;
+  locDocuments?: string;
+  pof?: string;
+  link365Report?: string;
+  investorsOpenClosedReport?: string;
+  linkCorporateProfile?: string;
+  // Offer / EMD / TC
+  investorEstimatedCoe?: string;
+  investorOfferPrice?: string;
+  buyersEmdAmount?: string;
+  buyersEmdStatus?: string;
+  buyersEmdStatusDate?: string;
+  investorTc?: string;
+  investorTcEmail?: string;
+  investorTcPhone?: string;
+  // Lender / Assignment
+  lenderFirstLast?: string;
+  lenderName?: string;
+  lenderEmail?: string;
+  lenderPhone?: string;
+  lenderDoubleEscrow?: string;
+  requiredDoubleEscrow?: string;
+  assignmentFullyExecutedContract?: string;
+  assignmentConversationWithAgent?: string;
+  verificationWholesaleFeeEscrow?: string;
+  aoaaVestingAmendmentFec?: string;
+  aoaaVestingAmendmentStatus?: string;
+  buyersLoanStatus?: string;
+  assignmentFeeReceivedDate?: string;
 }

@@ -411,6 +411,201 @@ export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectio
   );
 }
 
+// --- Investor / Buyer Information ----------------------------------------
+const EMD_STATUS_BUYER = ['Assigned', 'Sent to Escrow', 'Received', 'Refunded', 'Released'];
+const YES_NO_OPTIONS = ['Yes', 'No'];
+const AOAA_STATUS = ['Pending', 'Submitted', 'Approved', 'Rejected', 'Not Required'];
+const BUYER_LOAN_STATUS = ['Cash', 'Pre-Approved', 'Approved', 'Pending', 'Denied'];
+const WHOLESALE_STATUS_OPTIONS = ['Assigned/wholesale', 'Pending Assignment', 'On Hold', 'Cancelled'];
+
+type IbCtx = {
+  data: Record<string, any>;
+  set: (field: string, value: any) => void;
+};
+
+function IbText({
+  label,
+  field,
+  data,
+  set,
+  type = 'text',
+  placeholder,
+}: IbCtx & { label: string; field: string; type?: string; placeholder?: string }) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`ib-${field}`}>{label}</Label>
+      <Input
+        id={`ib-${field}`}
+        type={type}
+        value={data[field] || ''}
+        placeholder={placeholder}
+        onChange={(e) => set(field, e.target.value)}
+        data-testid={`input-ib-${testId(field)}`}
+      />
+    </div>
+  );
+}
+
+function IbArea({ label, field, data, set }: IbCtx & { label: string; field: string }) {
+  return (
+    <div className="space-y-2 md:col-span-2">
+      <Label htmlFor={`ib-${field}`}>{label}</Label>
+      <Textarea
+        id={`ib-${field}`}
+        value={data[field] || ''}
+        onChange={(e) => set(field, e.target.value)}
+        data-testid={`textarea-ib-${testId(field)}`}
+      />
+    </div>
+  );
+}
+
+function IbSelect({
+  label,
+  field,
+  options,
+  value,
+  onSelect,
+}: {
+  label: string;
+  field: string;
+  options: string[];
+  value: string;
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={`ib-${field}`}>{label}</Label>
+      <Select value={value} onValueChange={onSelect}>
+        <SelectTrigger id={`ib-${field}`} data-testid={`select-ib-${testId(field)}`}>
+          <SelectValue placeholder="Select..." />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt}>
+              {opt}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
+interface InvestorBuyerSectionProps {
+  data: Record<string, any>;
+  onChange: (next: Record<string, any>) => void;
+  wholesaleStatus: string;
+  onWholesaleStatusChange: (value: string) => void;
+}
+
+export function InvestorBuyerSection({
+  data,
+  onChange,
+  wholesaleStatus,
+  onWholesaleStatusChange,
+}: InvestorBuyerSectionProps) {
+  const set = (field: string, value: any) => onChange({ ...data, [field]: value });
+  const ctx: IbCtx = { data, set };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Investor / Buyer Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Buyer / Investor */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <IbText label="Buyers First and Last" field="buyerFirstLast" {...ctx} />
+          <IbText label="Investors Buyers Cell" field="investorBuyerCell" type="tel" {...ctx} />
+          <IbText label="Investor Email Address" field="investorEmail" type="email" {...ctx} />
+          <IbText label="Buying Entity or Name" field="buyingEntityName" {...ctx} />
+          <IbText label="Primary Signer First and Last" field="primarySigner" {...ctx} />
+          <IbText label="Secondary Signer First and Last" field="secondarySigner" {...ctx} />
+          <IbText label="Buyer Corporate Documents" field="buyerCorporateDocs" placeholder="Link..." {...ctx} />
+          <IbText label="LOC Documents" field="locDocuments" placeholder="Link..." {...ctx} />
+          <IbText label="POF" field="pof" placeholder="Link..." {...ctx} />
+          <IbText label="Link to 365 Report" field="link365Report" placeholder="Link..." {...ctx} />
+          <IbText label="Investors Open/Closed Report" field="investorsOpenClosedReport" {...ctx} />
+          <IbText label="Link to Corporate Profile" field="linkCorporateProfile" placeholder="Link..." {...ctx} />
+        </div>
+
+        {/* Offer / EMD / TC */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <IbText label="Investors Estimated COE" field="investorEstimatedCoe" type="date" {...ctx} />
+          <IbText label="Investors Offer Price" field="investorOfferPrice" type="number" placeholder="$" {...ctx} />
+          <IbText label="Buyers EMD Amount" field="buyersEmdAmount" type="number" placeholder="$" {...ctx} />
+          <IbSelect
+            label="Buyers EMD Status"
+            field="buyersEmdStatus"
+            options={EMD_STATUS_BUYER}
+            value={data.buyersEmdStatus || ''}
+            onSelect={(v) => set('buyersEmdStatus', v)}
+          />
+          <IbText label="Buyers EMD Status Date" field="buyersEmdStatusDate" type="date" {...ctx} />
+          <IbText label="Investor TC" field="investorTc" {...ctx} />
+          <IbText label="Investor TC Email" field="investorTcEmail" type="email" {...ctx} />
+          <IbText label="Investor TC Phone" field="investorTcPhone" type="tel" {...ctx} />
+        </div>
+
+        {/* Lender / Assignment */}
+        <div className="grid gap-4 md:grid-cols-2">
+          <IbText label="Investor Lenders First and Last Name" field="lenderFirstLast" {...ctx} />
+          <IbText label="Investors Lender Name" field="lenderName" {...ctx} />
+          <IbText label="Investors Lender Email" field="lenderEmail" type="email" {...ctx} />
+          <IbText label="Investors Lender Phone" field="lenderPhone" type="tel" {...ctx} />
+          <IbSelect
+            label="Does Lender Do Double Escrows?"
+            field="lenderDoubleEscrow"
+            options={YES_NO_OPTIONS}
+            value={data.lenderDoubleEscrow || ''}
+            onSelect={(v) => set('lenderDoubleEscrow', v)}
+          />
+          <IbSelect
+            label="Required Double Escrow"
+            field="requiredDoubleEscrow"
+            options={YES_NO_OPTIONS}
+            value={data.requiredDoubleEscrow || ''}
+            onSelect={(v) => set('requiredDoubleEscrow', v)}
+          />
+          <IbSelect
+            label="Investors Assignment Fully Executed Contract"
+            field="assignmentFullyExecutedContract"
+            options={YES_NO_OPTIONS}
+            value={data.assignmentFullyExecutedContract || ''}
+            onSelect={(v) => set('assignmentFullyExecutedContract', v)}
+          />
+          <IbText label="Verification of Wholesale Fee in Escrow" field="verificationWholesaleFeeEscrow" type="date" {...ctx} />
+          <IbText label="AOAA/Vesting Amendment FEC" field="aoaaVestingAmendmentFec" placeholder="Link..." {...ctx} />
+          <IbSelect
+            label="AOAA/Vesting Amendment Status"
+            field="aoaaVestingAmendmentStatus"
+            options={AOAA_STATUS}
+            value={data.aoaaVestingAmendmentStatus || ''}
+            onSelect={(v) => set('aoaaVestingAmendmentStatus', v)}
+          />
+          <IbSelect
+            label="Buyers Loan Status"
+            field="buyersLoanStatus"
+            options={BUYER_LOAN_STATUS}
+            value={data.buyersLoanStatus || ''}
+            onSelect={(v) => set('buyersLoanStatus', v)}
+          />
+          <IbSelect
+            label="Wholesale Status"
+            field="wholesaleStatus"
+            options={WHOLESALE_STATUS_OPTIONS}
+            value={wholesaleStatus || ''}
+            onSelect={onWholesaleStatusChange}
+          />
+          <IbText label="Assignment Fee Received Date" field="assignmentFeeReceivedDate" type="date" {...ctx} />
+          <IbArea label="Assignment Conversation with Representing Agent" field="assignmentConversationWithAgent" {...ctx} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function FinalContractTermsTab({ data, onChange }: FinalContractTermsTabProps) {
   // Any change recomputes the auto-derived deadline dates so they stay in sync.
   const update = (patch: Partial<FinalContractTerms>) => {

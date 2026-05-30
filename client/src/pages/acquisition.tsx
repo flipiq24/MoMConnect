@@ -16,7 +16,7 @@ import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment 
 } from '@/components/workflow-components';
-import FinalContractTermsTab, { EmdSection, WholesaleDetailsSection } from '@/components/final-contract-terms';
+import FinalContractTermsTab, { EmdSection, WholesaleDetailsSection, InvestorBuyerSection } from '@/components/final-contract-terms';
 
 interface AcquisitionProps {
   userEmail: string;
@@ -384,6 +384,15 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           </Card>
 
           <WholesaleDetailsSection data={propertyData} update={updateField} />
+
+          {propertyData.wholesaleStatus === 'Assigned/wholesale' && (
+            <InvestorBuyerSection
+              data={(propertyData.investorBuyerInfo as Record<string, any>) ?? {}}
+              onChange={(next) => updateField('investorBuyerInfo', next)}
+              wholesaleStatus={propertyData.wholesaleStatus || ''}
+              onWholesaleStatusChange={(v) => updateField('wholesaleStatus', v)}
+            />
+          )}
         </TabsContent>
         )}
 
