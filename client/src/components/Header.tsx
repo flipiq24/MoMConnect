@@ -1,4 +1,4 @@
-import { Home, LogOut, TableProperties } from 'lucide-react';
+import { Home, TableProperties } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'wouter';
 
@@ -8,12 +8,7 @@ interface HeaderProps {
 }
 
 export function Header({ userName, userEmail }: HeaderProps) {
-  const [location, setLocation] = useLocation();
-
-  const handleLogout = () => {
-    localStorage.removeItem('momUser');
-    setLocation('/login');
-  };
+  const [location] = useLocation();
 
   return (
     <header className="sticky top-0 z-50 bg-card border-b border-card-border shadow-sm">
@@ -44,16 +39,6 @@ export function Header({ userName, userEmail }: HeaderProps) {
               </Link>
             </nav>
           </div>
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleLogout}
-            data-testid="button-logout"
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
         </div>
       </div>
     </header>

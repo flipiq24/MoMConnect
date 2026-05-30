@@ -1,0 +1,1 @@
+- [Acquisition autosave loop](acquisition-autosave.md) — the page PATCHes the property every ~2s while idle due to a hydration↔mutation cache cycle; harmless but noisy.

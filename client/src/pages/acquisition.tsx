@@ -16,9 +16,7 @@ import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment, 
   StatusBadge, 
-  PropertySummary, 
-  CautionZone,
-  ZillowDataBox 
+  PropertySummary 
 } from '@/components/workflow-components';
 
 interface AcquisitionProps {
@@ -163,21 +161,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     }
   });
 
-  // Fetch Zillow data mutation
-  const fetchZillowMutation = useMutation({
-    mutationFn: async (address: string) => {
-      return await apiRequest('POST', '/api/properties/zillow', { address });
-    },
-    onSuccess: (data) => {
-      setZillowData(data);
-      setPropertyData((prev: any) => ({ ...prev, zillowData: data }));
-      toast({
-        title: "Zillow Data Loaded",
-        description: "Property data fetched successfully."
-      });
-    }
-  });
-
   const updateField = (field: string, value: any) => {
     setPropertyData((prev: any) => ({
       ...prev,
@@ -211,7 +194,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   }, [propertyData]);
 
   // Calculate metrics
-  const salePrice = (parseInt(propertyData.purchasePrice) || 0) + (parseInt(propertyData.forecastedWholesaleFee) || 0);
   const closingCosts = parseInt(propertyData.closingCosts) || 0;
   const arv = parseInt(propertyData.arv) || 0;
   const purchasePrice = parseInt(propertyData.purchasePrice) || 0;
@@ -305,119 +287,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
         {/* Acquisition Associate Tab */}
         <TabsContent value="acquisition" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Property Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Property Address with Fetch Zillow Button */}
-              <div className="space-y-2">
-                <Label htmlFor="address" title="Enter the full property street address, city, state and ZIP code">Property Address *</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="address"
-                    value={propertyData.address || ''}
-                    onChange={(e) => updateField('address', e.target.value)}
-                    placeholder="123 Main St Anytown USA"
-                    className="flex-1"
-                    data-testid="input-address"
-                  />
-                  <Button
-                    onClick={() => fetchZillowMutation.mutate(propertyData.address)}
-                    disabled={!propertyData.address || fetchZillowMutation.isPending}
-                    data-testid="button-fetch-zillow"
-                    title="Fetch property data from Zillow to auto-populate ARV and property details"
-                  >
-                    {fetchZillowMutation.isPending ? 'Fetching...' : 'Fetch Zillow Data'}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Zillow Data Display */}
-              {zillowData && (
-                <ZillowDataBox data={zillowData} />
-              )}
-
-              {/* Financial Fields */}
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="arv" title="After Repair Value - the estimated market value of the property after all repairs and renovations are completed">ARV (After Repair Value)</Label>
-                  <Input
-                    id="arv"
-                    type="number"
-                    value={propertyData.arv || ''}
-                    onChange={(e) => updateField('arv', e.target.value)}
-                    placeholder="1000000"
-                    data-testid="input-arv"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="estimatedRehab" title="Total estimated cost for all repairs, renovations, and improvements required to bring the property to ARV condition">Estimated Rehab</Label>
-                  <Input
-                    id="estimatedRehab"
-                    type="number"
-                    value={propertyData.estimatedRehab || ''}
-                    onChange={(e) => updateField('estimatedRehab', e.target.value)}
-                    placeholder="100000"
-                    data-testid="input-estimated-rehab"
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="purchasePrice" title="The contract price you are paying to acquire the property from the seller">Acquisition Purchase Price</Label>
-                  <Input
-                    id="purchasePrice"
-                    type="number"
-                    value={propertyData.purchasePrice || ''}
-                    onChange={(e) => updateField('purchasePrice', e.target.value)}
-                    placeholder="700000"
-                    data-testid="input-purchase-price"
-                  />
-                  <p className="text-xs text-muted-foreground">Est. Closing Cost (0.65%): ${(purchasePrice * 0.0065).toFixed(0)}</p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="salePrice" title="Calculated sale price to your wholesale buyer (Acquisition Purchase Price + Wholesale Fee)">Sale Price to Wholesale Buyer (Calculated)</Label>
-                  <Input
-                    id="salePrice"
-                    value={`$${salePrice.toLocaleString()}`}
-                    disabled
-                    className="bg-muted"
-                    data-testid="input-sale-price"
-                  />
-                  <p className="text-xs text-muted-foreground">Acquisition + Wholesale Fee</p>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="forecastedWholesaleFee" title="Assignment fee charged to the wholesale buyer for the contract - your profit on this deal">Forecasted Wholesale Fee</Label>
-                  <Input
-                    id="forecastedWholesaleFee"
-                    type="number"
-                    value={propertyData.forecastedWholesaleFee || ''}
-                    onChange={(e) => updateField('forecastedWholesaleFee', e.target.value)}
-                    placeholder="30000"
-                    data-testid="input-forecasted-fee"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <CautionZone 
-                    percentage={allInPercent}
-                    threshold={85}
-                    purchasePrice={purchasePrice}
-                    arv={arv}
-                    closingCosts={closingCosts}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Risk Assessment Factors - keeping existing structure */}
           <Card>
             <CardHeader>
