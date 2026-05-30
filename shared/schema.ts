@@ -280,7 +280,6 @@ export interface FinalContractTerms {
   accessCombo?: string;
   accessComments?: string;
   fullyExecutedRpa?: string;
-  hardApprovalToStartWholesale?: string;
   acquisitionInfoComments?: string;
   // Milestones
   contractWrittenDate?: string;

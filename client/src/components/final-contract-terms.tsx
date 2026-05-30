@@ -451,9 +451,6 @@ export default function FinalContractTermsTab({ data, onChange, propertyData, up
             <TextField label="Lockbox Location" field="lockboxLocation" required {...ctx} />
             <TextField label="Access Combo" field="accessCombo" {...ctx} />
             <SelectField label="Fully Executed Acquisition RPA" field="fullyExecutedRpa" options={YES_NO} {...ctx} />
-            {(ctx.data.intentForProperty || '') === 'Wholesale' && (
-              <SelectField label="Hard Approval to Start Wholesale Process" field="hardApprovalToStartWholesale" options={YES_NO} {...ctx} />
-            )}
             <AreaField label="Access Comments" field="accessComments" {...ctx} />
             <AreaField label="Acquisition Information Comments" field="acquisitionInfoComments" {...ctx} />
           </div>
