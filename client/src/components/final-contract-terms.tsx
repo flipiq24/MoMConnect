@@ -340,7 +340,7 @@ export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectio
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="wd-dmConfidenceExplanation" title="Explain the rationale behind your confidence percentage">DM Confidence Explanation</Label>
+          <Label htmlFor="wd-dmConfidenceExplanation" title="Explain the rationale behind your confidence percentage">Disposition Manager Confidence Explanation</Label>
           <Textarea
             id="wd-dmConfidenceExplanation"
             value={data.dmConfidenceExplanation || ''}
