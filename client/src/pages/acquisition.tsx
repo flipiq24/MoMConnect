@@ -185,15 +185,12 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     setLocation(`${currentPath}?tab=${newTab}`);
   };
 
-  // Auto-save on data change
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (propertyData.address) {
-        savePropertyMutation.mutate(propertyData);
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [propertyData]);
+  // Manual save handler
+  const handleSave = () => {
+    if (propertyData.address) {
+      savePropertyMutation.mutate(propertyData);
+    }
+  };
 
   // Calculate metrics
   const closingCosts = parseInt(propertyData.closingCosts) || 0;
@@ -252,17 +249,26 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {savePropertyMutation.isPending ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground" data-testid="text-saving">
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Saving...</span>
-            </div>
-          ) : lastSaved ? (
+        <div className="flex items-center gap-3">
+          {!savePropertyMutation.isPending && lastSaved ? (
             <p className="text-sm text-muted-foreground" data-testid="text-saved-time">
               Saved {lastSaved.toLocaleTimeString()}
             </p>
           ) : null}
+          <Button
+            onClick={handleSave}
+            disabled={savePropertyMutation.isPending || !propertyData.address}
+            data-testid="button-save"
+          >
+            {savePropertyMutation.isPending ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
+          </Button>
         </div>
       </div>
 
