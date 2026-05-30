@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Acquisition from "@/pages/acquisition";
 import Pipeline from "@/pages/pipeline";
-import { Header } from "@/components/Header";
 
 const DEFAULT_USER = { name: "John Doe", email: "john@company.com" };
 
@@ -15,7 +14,6 @@ function Router() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header userName={user.name} userEmail={user.email} />
       <main className="max-w-7xl mx-auto px-4 py-6">
         <Switch>
           <Route path="/">{() => <Acquisition userEmail={user.email} />}</Route>
