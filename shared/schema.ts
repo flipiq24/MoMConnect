@@ -117,6 +117,13 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
 });
 
+// Timestamp columns are written from the client as date/ISO strings. Coerce
+// them to Date objects (and treat empty string as null) so saves don't 400.
+const optionalTimestamp = z.preprocess(
+  (v) => (v === '' ? null : v),
+  z.coerce.date().nullable().optional(),
+);
+
 export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
@@ -124,6 +131,9 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   totalScore: true,
   emdRecommendation: true,
   successChance: true,
+}).extend({
+  contingencyRemovalDate: optionalTimestamp,
+  finalApprovalDate: optionalTimestamp,
 });
 
 export const updatePropertySchema = insertPropertySchema.partial().extend({

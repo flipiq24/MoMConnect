@@ -170,6 +170,27 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
   const isWholesaleIntent = (propertyData.finalContractTerms?.intentForProperty || '') === 'Wholesale';
 
+  // Hard AM Approval cannot be granted until every Hard AM checklist item is checked.
+  const HARD_AM_CHECKLIST_KEYS = [
+    'reviewDataDiscrepancies',
+    'orderTermite',
+    'confirmIssuesAddressed',
+    'checkUserActivity',
+    'confirmOfferStatus',
+    'confirmPhysicalInspections',
+    'zoningCheck',
+    'confirmValueBasedOnInspection',
+    'calledPendingBackupComps',
+    'reEstimatedInvestmentAnalysis',
+    'confirmROICalculations',
+    'confirmRepairCost',
+    'confirmInvestmentAnalysisMatchesRPA',
+    'floorPlanModifications',
+  ];
+  const hardAMChecklistComplete = HARD_AM_CHECKLIST_KEYS.every(
+    (k) => propertyData.hardAMChecklist?.[k]?.checked === true
+  );
+
   // Sync tab with URL
   useEffect(() => {
     const tabFromUrl = getTabFromUrl();
@@ -407,7 +428,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 <Input
                   id="contingencyRemovalDate"
                   type="date"
-                  value={propertyData.contingencyRemovalDate || ''}
+                  value={(propertyData.contingencyRemovalDate || '').split('T')[0]}
                   onChange={(e) => updateField('contingencyRemovalDate', e.target.value || null)}
                   data-testid="input-contingency-date"
                 />
@@ -1099,6 +1120,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 <Button 
                   className="w-full bg-green-600 hover:bg-green-700 text-white" 
                   size="lg"
+                  disabled={!hardAMChecklistComplete}
                   onClick={() => {
                     updateField('finalApprovalGrantedBy', userEmail);
                     updateField('finalApprovalDate', new Date().toISOString());
@@ -1111,6 +1133,11 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 >
                   Grant Final AM Approval
                 </Button>
+                {!hardAMChecklistComplete && (
+                  <p className="text-xs text-muted-foreground mt-2 text-center" data-testid="text-grant-approval-blocked">
+                    Complete all Hard AM Approval checklist items above to grant final approval.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>

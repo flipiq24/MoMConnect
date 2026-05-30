@@ -237,6 +237,7 @@ export function EmdSection({
   const update = (patch: Partial<FinalContractTerms>) =>
     onChange({ ...(data as FinalContractTerms), ...patch });
   const ctx: Ctx = { data, update };
+  const isRefunded = (data.emdStatus || '') === 'Refunded';
   return (
     <Card>
       <CardHeader>
@@ -262,8 +263,12 @@ export function EmdSection({
           <TextField label="EMD Status Date" field="emdStatusDate" type="date" {...ctx} />
           <TextField label="EMD Amount Sent" field="emdAmountSent" type="number" placeholder="$" {...ctx} />
           <TextField label="EMD Sent Date" field="emdSentDate" type="date" {...ctx} />
-          <TextField label="EMD Amount Refunded" field="emdAmountRefunded" type="number" placeholder="$" {...ctx} />
-          <TextField label="EMD Amount Refunded Date" field="emdAmountRefundedDate" type="date" {...ctx} />
+          {isRefunded && (
+            <>
+              <TextField label="EMD Amount Refunded" field="emdAmountRefunded" type="number" placeholder="$" {...ctx} />
+              <TextField label="EMD Amount Refunded Date" field="emdAmountRefundedDate" type="date" {...ctx} />
+            </>
+          )}
           <AreaField label="EMD Notes" field="emdNotes" {...ctx} />
         </div>
       </CardContent>
