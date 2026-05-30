@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { scoringRules, calculateTotalScore, getEMDRecommendation, getSelectColor } from '@shared/scoring';
@@ -44,6 +53,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     return params.get('propertyId');
   };
   const [activeTab, setActiveTab] = useState(getTabFromUrl());
+  const [showChecklistDialog, setShowChecklistDialog] = useState(false);
   const propertyIdFromUrl = getPropertyIdFromUrl();
 
   // Load property: if propertyId query param is present, load that specific
@@ -408,6 +418,10 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 <Select
                   value={propertyData.physicalInspectionContingency || ''}
                   onValueChange={(value) => {
+                    if (value === 'Approved' && !hardAMChecklistComplete) {
+                      setShowChecklistDialog(true);
+                      return;
+                    }
                     updateField('physicalInspectionContingency', value);
                   }}
                 >
@@ -1151,6 +1165,23 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={showChecklistDialog} onOpenChange={setShowChecklistDialog}>
+        <AlertDialogContent data-testid="dialog-hard-am-incomplete">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Complete the Hard AM Approval checklist</AlertDialogTitle>
+            <AlertDialogDescription>
+              Before you can approve the contingency removal, please fill out all of
+              the Hard AM Approval checklist items at the bottom of this tab.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction data-testid="button-checklist-dialog-ok">
+              Got it
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
