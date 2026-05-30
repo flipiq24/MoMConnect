@@ -168,6 +168,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     }));
   };
 
+  const isWholesaleIntent = (propertyData.finalContractTerms?.intentForProperty || '') === 'Wholesale';
+
   // Sync tab with URL
   useEffect(() => {
     const tabFromUrl = getTabFromUrl();
@@ -395,23 +397,25 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label>Wholesale Status</Label>
-                <Select
-                  value={propertyData.wholesaleStatus || ''}
-                  onValueChange={(value) => updateField('wholesaleStatus', value)}
-                >
-                  <SelectTrigger data-testid="select-wholesale-status">
-                    <SelectValue placeholder="Assigned/wholesale" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Assigned/wholesale">Assigned/wholesale</SelectItem>
-                    <SelectItem value="Pending Assignment">Pending Assignment</SelectItem>
-                    <SelectItem value="On Hold">On Hold</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {isWholesaleIntent && (
+                <div className="space-y-2">
+                  <Label>Wholesale Status</Label>
+                  <Select
+                    value={propertyData.wholesaleStatus || ''}
+                    onValueChange={(value) => updateField('wholesaleStatus', value)}
+                  >
+                    <SelectTrigger data-testid="select-wholesale-status">
+                      <SelectValue placeholder="Assigned/wholesale" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Assigned/wholesale">Assigned/wholesale</SelectItem>
+                      <SelectItem value="Pending Assignment">Pending Assignment</SelectItem>
+                      <SelectItem value="On Hold">On Hold</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -1079,29 +1083,28 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           </Card>
 
           {/* Managers Meeting */}
+          {isWholesaleIntent && (
           <Card>
             <CardHeader>
               <CardTitle>Managers Meeting</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(propertyData.finalContractTerms?.intentForProperty || '') === 'Wholesale' && (
-                <div className="space-y-2">
-                  <Label>Disposition Manager Approval Status</Label>
-                  <Select
-                    value={propertyData.dmApprovalStatus || ''}
-                    onValueChange={(value) => updateField('dmApprovalStatus', value)}
-                  >
-                    <SelectTrigger data-testid="select-dm-approval-status">
-                      <SelectValue placeholder="Approved Ready to send" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Approved Ready to send">Approved Ready to send</SelectItem>
-                      <SelectItem value="Needs Review">Needs Review</SelectItem>
-                      <SelectItem value="Rejected">Rejected</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div className="space-y-2">
+                <Label>Disposition Manager Approval Status</Label>
+                <Select
+                  value={propertyData.dmApprovalStatus || ''}
+                  onValueChange={(value) => updateField('dmApprovalStatus', value)}
+                >
+                  <SelectTrigger data-testid="select-dm-approval-status">
+                    <SelectValue placeholder="Approved Ready to send" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Approved Ready to send">Approved Ready to send</SelectItem>
+                    <SelectItem value="Needs Review">Needs Review</SelectItem>
+                    <SelectItem value="Rejected">Rejected</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="dmConfidencePercent" title="Your confidence level (0-100%) that you will successfully assign this wholesale contract to a buyer">DM's Confidence of Assignment by %</Label>
@@ -1186,6 +1189,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               </div>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         {/* Final Contract Terms Tab */}
