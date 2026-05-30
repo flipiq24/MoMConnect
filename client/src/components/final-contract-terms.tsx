@@ -516,10 +516,10 @@ export function InvestorBuyerSection({
       <CardContent className="space-y-8">
         {/* Buyer / Investor */}
         <div className="grid gap-4 md:grid-cols-2">
+          <IbText label="Buying Entity or Name" field="buyingEntityName" {...ctx} />
           <IbText label="Buyers First and Last" field="buyerFirstLast" {...ctx} />
           <IbText label="Investors Buyers Cell" field="investorBuyerCell" type="tel" {...ctx} />
           <IbText label="Investor Email Address" field="investorEmail" type="email" {...ctx} />
-          <IbText label="Buying Entity or Name" field="buyingEntityName" {...ctx} />
           <IbText label="Primary Signer First and Last" field="primarySigner" {...ctx} />
           <IbText label="Secondary Signer First and Last" field="secondarySigner" {...ctx} />
           <IbText label="Buyer Corporate Documents" field="buyerCorporateDocs" placeholder="Link..." {...ctx} />
