@@ -77,6 +77,7 @@ const CLOSING_COSTS = ['Buyer Pays', 'Seller Pays', 'Split', 'Per Contract'];
 const COST_RESPONSIBILITY = ['Each pays own', "Buyer pays seller's"];
 
 const DANGER_VALUE = "Buyer pays seller's";
+const CLOSING_COSTS_DANGER_VALUE = "Buyer Pays";
 
 // --- field context shared by every field ----------------------------------
 type Ctx = {
@@ -156,6 +157,7 @@ function SelectField({
   update,
   required = false,
   danger = false,
+  dangerValue = DANGER_VALUE,
   onDangerSelected,
 }: Ctx & {
   label: string;
@@ -163,10 +165,11 @@ function SelectField({
   options: string[];
   required?: boolean;
   danger?: boolean;
+  dangerValue?: string;
   onDangerSelected?: () => void;
 }) {
   const value = data[field as string] || '';
-  const isDanger = danger && value === DANGER_VALUE;
+  const isDanger = danger && value === dangerValue;
   return (
     <div className="space-y-2">
       <Label htmlFor={field as string} className={isDanger ? 'text-destructive' : undefined}>
@@ -177,7 +180,7 @@ function SelectField({
         value={value}
         onValueChange={(v) => {
           update({ [field]: v } as Partial<FinalContractTerms>);
-          if (v === DANGER_VALUE) onDangerSelected?.();
+          if (v === dangerValue) onDangerSelected?.();
         }}
       >
         <SelectTrigger
@@ -633,7 +636,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
 
   // When the buyer is paying the seller's closing costs, the Escrow Cost must be
   // entered as a dollar amount and a confirmation dialog is shown.
-  const buyerPaysSellersClosing = (ctx.data.contractClosingCosts || '') === DANGER_VALUE;
+  const buyerPaysSellersClosing = (ctx.data.contractClosingCosts || '') === CLOSING_COSTS_DANGER_VALUE;
   const [showClosingCostWarning, setShowClosingCostWarning] = useState(false);
 
   return (
@@ -725,7 +728,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
             <TextField label="Contract Inspection Period" field="contractPhysicalInspectionContingency" type="number" placeholder="days" {...ctx} />
             <SelectField label="Contract Termite Inspection" field="contractTermite" options={TERMITE} {...ctx} />
             <TextField label="Contract Disclosures & Reports" field="contractDisclosuresReports" {...ctx} />
-            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger onDangerSelected={() => setShowClosingCostWarning(true)} {...ctx} />
+            <SelectField label="Contract Closing Costs" field="contractClosingCosts" options={CLOSING_COSTS} danger dangerValue={CLOSING_COSTS_DANGER_VALUE} onDangerSelected={() => setShowClosingCostWarning(true)} {...ctx} />
             <TextField label="Contract Possession" field="contractPossession" {...ctx} />
             <TextField label="Amended Contract Purchase Price" field="amendedContractPurchasePrice" type="number" placeholder="$" {...ctx} />
             <AreaField label="Contract Remarks" field="contractRemarks" {...ctx} />
