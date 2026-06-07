@@ -309,6 +309,7 @@ export function WholesaleDetailsSection({ data, update }: WholesaleDetailsSectio
             <SelectContent>
               <SelectItem value="Assigned/wholesale">Assigned/wholesale</SelectItem>
               <SelectItem value="Pending Assignment">Pending Assignment</SelectItem>
+              <SelectItem value="Deal sent out">Deal sent out</SelectItem>
               <SelectItem value="On Hold">On Hold</SelectItem>
               <SelectItem value="Cancelled">Cancelled</SelectItem>
             </SelectContent>
@@ -423,7 +424,7 @@ const EMD_STATUS_BUYER = ['Assigned', 'Sent to Escrow', 'Received', 'Refunded', 
 const YES_NO_OPTIONS = ['Yes', 'No'];
 const AOAA_STATUS = ['Pending', 'Submitted', 'Approved', 'Rejected', 'Not Required'];
 const BUYER_LOAN_STATUS = ['Cash', 'Pre-Approved', 'Approved', 'Pending', 'Denied'];
-const WHOLESALE_STATUS_OPTIONS = ['Assigned/wholesale', 'Pending Assignment', 'On Hold', 'Cancelled'];
+const WHOLESALE_STATUS_OPTIONS = ['Assigned/wholesale', 'Pending Assignment', 'Deal sent out', 'On Hold', 'Cancelled'];
 
 type IbCtx = {
   data: Record<string, any>;
