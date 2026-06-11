@@ -25,7 +25,7 @@ import type { Property } from '@shared/schema';
 import { 
   CheckboxWithComment 
 } from '@/components/workflow-components';
-import FinalContractTermsTab, { EmdSection, WholesaleDetailsSection, InvestorBuyerSection } from '@/components/final-contract-terms';
+import FinalContractTermsTab, { EmdSection, WholesaleDetailsSection, InvestorBuyerSection, InsuranceFields } from '@/components/final-contract-terms';
 
 interface AcquisitionProps {
   userEmail: string;
@@ -547,6 +547,12 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <CardTitle className={attemptedApproval && !softAMChecklistComplete ? 'text-destructive' : undefined}>Soft AM Approval Checklist</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              <InsuranceFields
+                data={propertyData.finalContractTerms ?? {}}
+                onChange={(next) => updateField('finalContractTerms', next)}
+                idPrefix="soft"
+              />
+
               <CheckboxWithComment
                 id="read-agent-comments"
                 label="Read Agent Comments"
@@ -919,6 +925,12 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
               <p className="text-sm text-muted-foreground">Items reviewed by Acquisition Manager</p>
             </CardHeader>
             <CardContent className="space-y-4">
+              <InsuranceFields
+                data={propertyData.finalContractTerms ?? {}}
+                onChange={(next) => updateField('finalContractTerms', next)}
+                idPrefix="hard"
+              />
+
               <CheckboxWithComment
                 id="review-discrepancies"
                 label="Review any Data Discrepancies"

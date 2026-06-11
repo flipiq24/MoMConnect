@@ -361,6 +361,9 @@ export interface FinalContractTerms {
   escrowCost?: string;
   otherCostOrCreditsOutside?: string;
   explanationOtherCostsCredits?: string;
+  // Insurance (shared across Soft & Hard AM Approval and Other Cost or Credits)
+  insuranceType?: string;
+  insuranceAmount?: string;
   // Wholesale EMD
   emdContractAmount?: string; // duplicated from Contract EMD Amount
   wireInstructions?: string;

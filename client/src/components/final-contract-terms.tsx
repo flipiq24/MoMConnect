@@ -285,6 +285,59 @@ export function EmdSection({
   );
 }
 
+// --- shared Insurance fields (used in both Soft & Hard AM Approval so the data
+//     stays in sync; non-standard insurance also surfaces in Other Cost or
+//     Credits) ----------------------------------------------------------------
+export const INSURANCE_OPTIONS = ['Standard cost', 'High Wildfire Risk Zones', 'Flood Zone'];
+
+export function InsuranceFields({
+  data,
+  onChange,
+  idPrefix,
+}: {
+  data: Record<string, any>;
+  onChange: (next: FinalContractTerms) => void;
+  idPrefix: string;
+}) {
+  const update = (patch: Partial<FinalContractTerms>) =>
+    onChange({ ...(data as FinalContractTerms), ...patch });
+  const insuranceType = data.insuranceType || '';
+  const isNonStandard = insuranceType !== '' && insuranceType !== 'Standard cost';
+  return (
+    <div className="space-y-2">
+      <Label className="font-semibold">Insurance</Label>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Select
+          value={insuranceType}
+          onValueChange={(v) =>
+            update(v === 'Standard cost' ? { insuranceType: v, insuranceAmount: '' } : { insuranceType: v })
+          }
+        >
+          <SelectTrigger data-testid={`select-insurance-type-${idPrefix}`}>
+            <SelectValue placeholder="Select insurance..." />
+          </SelectTrigger>
+          <SelectContent>
+            {INSURANCE_OPTIONS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {opt}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {isNonStandard && (
+          <Input
+            type="number"
+            placeholder="Insurance amount ($)"
+            value={data.insuranceAmount || ''}
+            onChange={(e) => update({ insuranceAmount: e.target.value })}
+            data-testid={`input-insurance-amount-${idPrefix}`}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface WholesaleDetailsSectionProps {
   data: Record<string, any>;
   update: (field: string, value: any) => void;
@@ -755,6 +808,9 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
                 }
                 {...ctx}
               />
+              {data.insuranceType && data.insuranceType !== 'Standard cost' && (
+                <TextField label={`Insurance Cost (${data.insuranceType})`} field="insuranceAmount" type="number" placeholder="$" {...ctx} />
+              )}
               <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
               <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
             </div>
