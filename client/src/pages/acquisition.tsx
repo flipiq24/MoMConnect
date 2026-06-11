@@ -40,6 +40,9 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [currentPropertyId, setCurrentPropertyId] = useState<string | null>(null);
   const [zillowData, setZillowData] = useState<any>(null);
+  // Session-only files dropped in the Documents card. Kept out of propertyData so
+  // they are never persisted/saved; survives tab switches within the session.
+  const [documentFiles, setDocumentFiles] = useState<File[]>([]);
   
   // Route-aware tab state
   const VALID_TABS = ['final-contract', 'acquisition', 'am-approval'];
@@ -992,6 +995,8 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
           <FinalContractTermsTab
             data={propertyData.finalContractTerms ?? {}}
             onChange={(next) => updateField('finalContractTerms', next)}
+            documentFiles={documentFiles}
+            onDocumentFilesChange={setDocumentFiles}
           />
         </TabsContent>
       </Tabs>

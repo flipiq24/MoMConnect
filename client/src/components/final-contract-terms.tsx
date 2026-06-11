@@ -20,6 +20,8 @@ import type { FinalContractTerms } from '@shared/schema';
 interface FinalContractTermsTabProps {
   data: FinalContractTerms;
   onChange: (next: FinalContractTerms) => void;
+  documentFiles?: File[];
+  onDocumentFilesChange?: (files: File[]) => void;
 }
 
 // --- date helpers ---------------------------------------------------------
@@ -139,26 +141,41 @@ function formatBytes(bytes: number): string {
 }
 
 // Session-only file drop box. Files are held in memory for the current session
-// and are NOT uploaded or persisted.
-function FileDropField() {
-  const [files, setFiles] = useState<File[]>([]);
+// (lifted to the parent page so they survive tab switches) and are NOT uploaded
+// or persisted.
+function FileDropField({
+  files,
+  onFilesChange,
+}: {
+  files: File[];
+  onFilesChange: (files: File[]) => void;
+}) {
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const addFiles = (list: FileList | null) => {
     if (!list || list.length === 0) return;
-    setFiles((prev) => [...prev, ...Array.from(list)]);
+    onFilesChange([...files, ...Array.from(list)]);
   };
 
   const removeFile = (idx: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== idx));
+    onFilesChange(files.filter((_, i) => i !== idx));
   };
 
   return (
     <div className="space-y-2">
       <Label>Or Dump Files Here</Label>
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="Drop files here or browse to add files for this session"
         onClick={() => inputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
@@ -215,6 +232,7 @@ function FileDropField() {
                 type="button"
                 size="icon"
                 variant="ghost"
+                aria-label={`Remove ${f.name}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   removeFile(i);
@@ -769,7 +787,12 @@ export function InvestorBuyerSection({
   );
 }
 
-export default function FinalContractTermsTab({ data, onChange }: FinalContractTermsTabProps) {
+export default function FinalContractTermsTab({
+  data,
+  onChange,
+  documentFiles = [],
+  onDocumentFilesChange = () => {},
+}: FinalContractTermsTabProps) {
   // Any change recomputes the auto-derived deadline dates so they stay in sync.
   const update = (patch: Partial<FinalContractTerms>) => {
     const merged: Record<string, any> = { ...data, ...patch };
@@ -865,7 +888,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Property File Link" field="propertyFileLink" type="url" placeholder="https://..." {...ctx} />
-            <FileDropField />
+            <FileDropField files={documentFiles} onFilesChange={onDocumentFilesChange} />
           </div>
         </CardContent>
       </Card>
