@@ -183,27 +183,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
   // Hard AM Approval cannot be granted until every Hard AM checklist item is checked.
   const HARD_AM_CHECKLIST_KEYS = [
-    'reviewDataDiscrepancies',
-    'orderTermite',
-    'confirmIssuesAddressed',
-    'checkUserActivity',
-    'confirmOfferStatus',
-    'confirmPhysicalInspections',
-    'zoningCheck',
-    'confirmValueBasedOnInspection',
-    'calledPendingBackupComps',
-    'reEstimatedInvestmentAnalysis',
-    'confirmROICalculations',
-    'confirmRepairCost',
-    'confirmInvestmentAnalysisMatchesRPA',
-    'floorPlanModifications',
-  ];
-  const hardAMChecklistComplete = HARD_AM_CHECKLIST_KEYS.every(
-    (k) => propertyData.hardAMChecklist?.[k]?.checked === true
-  );
-
-  // Soft AM Approval checklist completeness.
-  const SOFT_AM_CHECKLIST_KEYS = [
     'readAgentComments',
     'reviewGoogleMaps',
     'reviewRequiredInspections',
@@ -213,16 +192,27 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
     'lookOutForAdditions',
     'readSystemNotes',
     'agentCallsBackup',
+    'additionalVerification',
     'confirmOfferStatus',
     'verifyOfferTerms',
     'investmentAnalysisConfirmed',
     'confirmROICalculations',
     'confirmRepairCost',
     'confirmOfferTermsMatchContract',
-    'additionalVerification',
+    'reviewDataDiscrepancies',
+    'orderTermite',
+    'confirmIssuesAddressed',
+    'checkUserActivity',
+    'confirmPhysicalInspections',
+    'zoningCheck',
+    'confirmValueBasedOnInspection',
+    'calledPendingBackupComps',
+    'reEstimatedInvestmentAnalysis',
+    'confirmInvestmentAnalysisMatchesRPA',
+    'floorPlanModifications',
   ];
-  const softAMChecklistComplete = SOFT_AM_CHECKLIST_KEYS.every(
-    (k) => propertyData.softAMChecklist?.[k]?.checked === true
+  const hardAMChecklistComplete = HARD_AM_CHECKLIST_KEYS.every(
+    (k) => propertyData.hardAMChecklist?.[k]?.checked === true
   );
 
   // EMD section completeness (key fields that must be filled in).
@@ -242,10 +232,26 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
 
   // Sections that must be filled out before the contingency removal can be approved.
   const missingSections = [
-    !softAMChecklistComplete && 'Soft AM Approval Checklist',
     !emdComplete && 'EMD',
     !hardAMChecklistComplete && 'Hard AM Approval Checklist',
   ].filter(Boolean) as string[];
+
+  // Renders a single Hard AM Approval checklist item bound to hardAMChecklist.
+  const hardItem = (fieldKey: string, id: string, label: string, tooltip?: string) => {
+    const store = propertyData.hardAMChecklist ?? {};
+    const item = store[fieldKey] ?? {};
+    return (
+      <CheckboxWithComment
+        id={id}
+        label={label}
+        tooltip={tooltip}
+        checked={item.checked || false}
+        comment={item.comment}
+        onCheckedChange={(checked) => updateField('hardAMChecklist', { ...store, [fieldKey]: { checked, comment: item.comment || '' } })}
+        onCommentChange={(comment) => updateField('hardAMChecklist', { ...store, [fieldKey]: { checked: item.checked || false, comment } })}
+      />
+    );
+  };
 
   // Sync tab with URL
   useEffect(() => {
@@ -541,166 +547,35 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
             highlightIncomplete={attemptedApproval && !emdComplete}
           />
 
-          {/* Soft AM Approval Checklist */}
-          <Card className={attemptedApproval && !softAMChecklistComplete ? 'border-destructive' : undefined}>
+          {/* Hard AM Approval Checklist */}
+          <Card className={attemptedApproval && !hardAMChecklistComplete ? 'border-destructive' : undefined}>
             <CardHeader>
-              <CardTitle className={attemptedApproval && !softAMChecklistComplete ? 'text-destructive' : undefined}>Soft AM Approval Checklist</CardTitle>
+              <CardTitle className={attemptedApproval && !hardAMChecklistComplete ? 'text-destructive' : undefined}>Hard AM Approval</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <InsuranceFields
                 data={propertyData.finalContractTerms ?? {}}
                 onChange={(next) => updateField('finalContractTerms', next)}
-                idPrefix="soft"
+                idPrefix="hard"
               />
 
-              <CheckboxWithComment
-                id="read-agent-comments"
-                label="Read Agent Comments"
-                tooltip="Review inspection findings with team and acquisition associate to align on property condition and strategy"
-                checked={propertyData.softAMChecklist?.readAgentComments?.checked || false}
-                comment={propertyData.softAMChecklist?.readAgentComments?.comment}
-                onCheckedChange={(checked) => {
-                  console.log('[CHECKBOX-HANDLER] Read Agent Comments onCheckedChange called with:', checked);
-                  updateField('softAMChecklist', {
-                    ...(propertyData.softAMChecklist ?? {}),
-                    readAgentComments: { checked, comment: propertyData.softAMChecklist?.readAgentComments?.comment || '' }
-                  });
-                }}
-                onCommentChange={(comment) => {
-                  console.log('[CHECKBOX-HANDLER] Read Agent Comments onCommentChange called with:', comment);
-                  updateField('softAMChecklist', {
-                    ...(propertyData.softAMChecklist ?? {}),
-                    readAgentComments: { checked: propertyData.softAMChecklist?.readAgentComments?.checked || false, comment }
-                  });
-                }}
-              />
+              {hardItem('readAgentComments', 'read-agent-comments', 'Read Agent Comments', 'Review inspection findings with team and acquisition associate to align on property condition and strategy')}
 
-              <CheckboxWithComment
-                id="review-google-maps"
-                label="Review Google Maps"
-                tooltip="Review property location, nearby amenities, and area characteristics using satellite and street view"
-                checked={propertyData.softAMChecklist?.reviewGoogleMaps?.checked || false}
-                comment={propertyData.softAMChecklist?.reviewGoogleMaps?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewGoogleMaps: { checked, comment: propertyData.softAMChecklist?.reviewGoogleMaps?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewGoogleMaps: { checked: propertyData.softAMChecklist?.reviewGoogleMaps?.checked || false, comment }
-                })}
-              />
+              {hardItem('reviewGoogleMaps', 'review-google-maps', 'Review Google Maps', 'Review property location, nearby amenities, and area characteristics using satellite and street view')}
 
-              <CheckboxWithComment
-                id="review-inspections"
-                label="Review Required Inspections ***Utilities On ***Access"
-                tooltip="Verify all required inspections have been completed and documented before proceeding"
-                checked={propertyData.softAMChecklist?.reviewRequiredInspections?.checked || false}
-                comment={propertyData.softAMChecklist?.reviewRequiredInspections?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewRequiredInspections: { checked, comment: propertyData.softAMChecklist?.reviewRequiredInspections?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewRequiredInspections: { checked: propertyData.softAMChecklist?.reviewRequiredInspections?.checked || false, comment }
-                })}
-              />
+              {hardItem('reviewRequiredInspections', 'review-inspections', 'Review Required Inspections ***Utilities On ***Access', 'Verify all required inspections have been completed and documented before proceeding')}
 
-              <CheckboxWithComment
-                id="usability-of-lot"
-                label="Usability of Lot"
-                tooltip="Assess lot topography, setbacks, easements, and buildable area. Verify any restrictions affecting development or use"
-                checked={propertyData.softAMChecklist?.usabilityOfLot?.checked || false}
-                comment={propertyData.softAMChecklist?.usabilityOfLot?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  usabilityOfLot: { checked, comment: propertyData.softAMChecklist?.usabilityOfLot?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  usabilityOfLot: { checked: propertyData.softAMChecklist?.usabilityOfLot?.checked || false, comment }
-                })}
-              />
+              {hardItem('usabilityOfLot', 'usability-of-lot', 'Usability of Lot', 'Assess lot topography, setbacks, easements, and buildable area. Verify any restrictions affecting development or use')}
 
-              <CheckboxWithComment
-                id="possible-zoning"
-                label="Possible Zoning"
-                tooltip="Verify current zoning classification and permitted uses. Check for any zoning restrictions or variances needed"
-                checked={propertyData.softAMChecklist?.possibleZoning?.checked || false}
-                comment={propertyData.softAMChecklist?.possibleZoning?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  possibleZoning: { checked, comment: propertyData.softAMChecklist?.possibleZoning?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  possibleZoning: { checked: propertyData.softAMChecklist?.possibleZoning?.checked || false, comment }
-                })}
-              />
+              {hardItem('possibleZoning', 'possible-zoning', 'Possible Zoning', 'Verify current zoning classification and permitted uses. Check for any zoning restrictions or variances needed')}
 
-              <CheckboxWithComment
-                id="review-pictures"
-                label="Review Pictures"
-                tooltip="Review all property photos for condition, quality, potential issues, and accuracy of listing representations"
-                checked={propertyData.softAMChecklist?.reviewPictures?.checked || false}
-                comment={propertyData.softAMChecklist?.reviewPictures?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewPictures: { checked, comment: propertyData.softAMChecklist?.reviewPictures?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  reviewPictures: { checked: propertyData.softAMChecklist?.reviewPictures?.checked || false, comment }
-                })}
-              />
+              {hardItem('reviewPictures', 'review-pictures', 'Review Pictures', 'Review all property photos for condition, quality, potential issues, and accuracy of listing representations')}
 
-              <CheckboxWithComment
-                id="look-out-for-additions"
-                label="Look out for Additions"
-                tooltip="CRITICAL: Even if additions appear in tax records, they may not be legally permitted. MUST call the city to verify permits. Unpermitted additions create major liability"
-                checked={propertyData.softAMChecklist?.lookOutForAdditions?.checked || false}
-                comment={propertyData.softAMChecklist?.lookOutForAdditions?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  lookOutForAdditions: { checked, comment: propertyData.softAMChecklist?.lookOutForAdditions?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  lookOutForAdditions: { checked: propertyData.softAMChecklist?.lookOutForAdditions?.checked || false, comment }
-                })}
-              />
+              {hardItem('lookOutForAdditions', 'look-out-for-additions', 'Look out for Additions', 'CRITICAL: Even if additions appear in tax records, they may not be legally permitted. MUST call the city to verify permits. Unpermitted additions create major liability')}
 
-              <CheckboxWithComment
-                id="read-system-notes"
-                label="Read system Notes"
-                tooltip="Review system user activity to check for tenant occupancy status at close of escrow and any communication regarding possession"
-                checked={propertyData.softAMChecklist?.readSystemNotes?.checked || false}
-                comment={propertyData.softAMChecklist?.readSystemNotes?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  readSystemNotes: { checked, comment: propertyData.softAMChecklist?.readSystemNotes?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  readSystemNotes: { checked: propertyData.softAMChecklist?.readSystemNotes?.checked || false, comment }
-                })}
-              />
+              {hardItem('readSystemNotes', 'read-system-notes', 'Read system Notes', 'Review system user activity to check for tenant occupancy status at close of escrow and any communication regarding possession')}
 
-              <CheckboxWithComment
-                id="agent-calls-backup"
-                label="Agent Calls Backup/Pending/Smoking guns"
-                checked={propertyData.softAMChecklist?.agentCallsBackup?.checked || false}
-                comment={propertyData.softAMChecklist?.agentCallsBackup?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  agentCallsBackup: { checked, comment: propertyData.softAMChecklist?.agentCallsBackup?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  agentCallsBackup: { checked: propertyData.softAMChecklist?.agentCallsBackup?.checked || false, comment }
-                })}
-              />
+              {hardItem('agentCallsBackup', 'agent-calls-backup', 'Agent Calls Backup/Pending/Smoking guns')}
 
               <div className="space-y-2">
                 <Label>Busy Streets</Label>
@@ -757,20 +632,7 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 )}
               </div>
 
-              <CheckboxWithComment
-                id="additional-verification"
-                label='Run own comps and then compare to Proposed "ARV"'
-                checked={propertyData.softAMChecklist?.additionalVerification?.checked || false}
-                comment={propertyData.softAMChecklist?.additionalVerification?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  additionalVerification: { checked, comment: propertyData.softAMChecklist?.additionalVerification?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  additionalVerification: { checked: propertyData.softAMChecklist?.additionalVerification?.checked || false, comment }
-                })}
-              />
+              {hardItem('additionalVerification', 'additional-verification', 'Run own comps and then compare to Proposed "ARV"')}
 
               <div className="space-y-2 bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
                 <Label htmlFor="arvConfidencePercent">ARV confidence by %</Label>
@@ -784,95 +646,11 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                 />
               </div>
 
-              <CheckboxWithComment
-                id="confirm-offer-status"
-                label='Confirm "Offer Status" is correct'
-                checked={propertyData.softAMChecklist?.confirmOfferStatus?.checked || false}
-                comment={propertyData.softAMChecklist?.confirmOfferStatus?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmOfferStatus: { checked, comment: propertyData.softAMChecklist?.confirmOfferStatus?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmOfferStatus: { checked: propertyData.softAMChecklist?.confirmOfferStatus?.checked || false, comment }
-                })}
-              />
+              {hardItem('verifyOfferTerms', 'verify-offer-terms', 'Verify Offer terms and that proper Due-Diligence time frames have been requested')}
 
-              <CheckboxWithComment
-                id="verify-offer-terms"
-                label="Verify Offer terms and that proper Due-Diligence time frames have been requested"
-                checked={propertyData.softAMChecklist?.verifyOfferTerms?.checked || false}
-                comment={propertyData.softAMChecklist?.verifyOfferTerms?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  verifyOfferTerms: { checked, comment: propertyData.softAMChecklist?.verifyOfferTerms?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  verifyOfferTerms: { checked: propertyData.softAMChecklist?.verifyOfferTerms?.checked || false, comment }
-                })}
-              />
+              {hardItem('investmentAnalysisConfirmed', 'investment-analysis-confirmed', 'Investment Analysis confirmed')}
 
-              <CheckboxWithComment
-                id="investment-analysis-confirmed"
-                label="Investment Analysis confirmed"
-                checked={propertyData.softAMChecklist?.investmentAnalysisConfirmed?.checked || false}
-                comment={propertyData.softAMChecklist?.investmentAnalysisConfirmed?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  investmentAnalysisConfirmed: { checked, comment: propertyData.softAMChecklist?.investmentAnalysisConfirmed?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  investmentAnalysisConfirmed: { checked: propertyData.softAMChecklist?.investmentAnalysisConfirmed?.checked || false, comment }
-                })}
-              />
-
-              <CheckboxWithComment
-                id="confirm-roi"
-                label="Confirm ROI calculations are correct"
-                checked={propertyData.softAMChecklist?.confirmROICalculations?.checked || false}
-                comment={propertyData.softAMChecklist?.confirmROICalculations?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmROICalculations: { checked, comment: propertyData.softAMChecklist?.confirmROICalculations?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmROICalculations: { checked: propertyData.softAMChecklist?.confirmROICalculations?.checked || false, comment }
-                })}
-              />
-
-              <CheckboxWithComment
-                id="confirm-repair-cost"
-                label='Confirm "Repair Cost"'
-                checked={propertyData.softAMChecklist?.confirmRepairCost?.checked || false}
-                comment={propertyData.softAMChecklist?.confirmRepairCost?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmRepairCost: { checked, comment: propertyData.softAMChecklist?.confirmRepairCost?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmRepairCost: { checked: propertyData.softAMChecklist?.confirmRepairCost?.checked || false, comment }
-                })}
-              />
-
-              <CheckboxWithComment
-                id="confirm-offer-terms-match"
-                label="Confirm offer terms match contract"
-                checked={propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.checked || false}
-                comment={propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.comment}
-                onCheckedChange={(checked) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmOfferTermsMatchContract: { checked, comment: propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.comment || '' }
-                })}
-                onCommentChange={(comment) => updateField('softAMChecklist', {
-                  ...(propertyData.softAMChecklist ?? {}),
-                  confirmOfferTermsMatchContract: { checked: propertyData.softAMChecklist?.confirmOfferTermsMatchContract?.checked || false, comment }
-                })}
-              />
+              {hardItem('confirmOfferTermsMatchContract', 'confirm-offer-terms-match', 'Confirm offer terms match contract')}
 
               <div className="space-y-2">
                 <Label className="font-semibold">Approved Inspections (each a check box)</Label>
@@ -915,21 +693,6 @@ export default function Acquisition({ userEmail }: AcquisitionProps) {
                   </label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Hard AM Approval Checklist */}
-          <Card className={attemptedApproval && !hardAMChecklistComplete ? 'border-destructive' : undefined}>
-            <CardHeader>
-              <CardTitle className={attemptedApproval && !hardAMChecklistComplete ? 'text-destructive' : undefined}>Hard AM Approval</CardTitle>
-              <p className="text-sm text-muted-foreground">Items reviewed by Acquisition Manager</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <InsuranceFields
-                data={propertyData.finalContractTerms ?? {}}
-                onChange={(next) => updateField('finalContractTerms', next)}
-                idPrefix="hard"
-              />
 
               <CheckboxWithComment
                 id="review-discrepancies"
