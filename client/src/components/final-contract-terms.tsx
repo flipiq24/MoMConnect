@@ -305,7 +305,7 @@ export function InsuranceFields({
   const isNonStandard = insuranceType !== '' && insuranceType !== 'Standard cost';
   return (
     <div className="space-y-2">
-      <Label className="font-semibold">Insurance</Label>
+      <Label className={`font-semibold ${isNonStandard ? 'text-destructive' : ''}`}>Insurance</Label>
       <div className="grid gap-4 md:grid-cols-2">
         <Select
           value={insuranceType}
@@ -313,7 +313,10 @@ export function InsuranceFields({
             update(v === 'Standard cost' ? { insuranceType: v, insuranceAmount: '' } : { insuranceType: v })
           }
         >
-          <SelectTrigger data-testid={`select-insurance-type-${idPrefix}`}>
+          <SelectTrigger
+            className={isNonStandard ? 'border-destructive text-destructive' : ''}
+            data-testid={`select-insurance-type-${idPrefix}`}
+          >
             <SelectValue placeholder="Select insurance..." />
           </SelectTrigger>
           <SelectContent>
@@ -330,6 +333,7 @@ export function InsuranceFields({
             placeholder="Insurance amount ($)"
             value={data.insuranceAmount || ''}
             onChange={(e) => update({ insuranceAmount: e.target.value })}
+            className="border-destructive"
             data-testid={`input-insurance-amount-${idPrefix}`}
           />
         )}
