@@ -813,7 +813,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
                 {...ctx}
               />
               {data.insuranceType && data.insuranceType !== 'Standard cost' && (
-                <TextField label={`Insurance Cost (${data.insuranceType})`} field="insuranceAmount" type="number" placeholder="$" {...ctx} />
+                <TextField label={`Insurance Cost (${data.insuranceType})`} field="insuranceAmount" type="number" placeholder="$" danger {...ctx} />
               )}
               <TextField label="Other Cost or Credits Outside of Escrow/Contract" field="otherCostOrCreditsOutside" {...ctx} />
               <AreaField label="Explanation of Other Costs and Credits" field="explanationOtherCostsCredits" {...ctx} />
