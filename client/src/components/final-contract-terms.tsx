@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { Upload, File as FileIcon, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -125,6 +127,105 @@ function TextField({
         <p className="text-xs text-destructive" data-testid={`warning-${testId(field as string)}`}>
           {dangerMessage}
         </p>
+      )}
+    </div>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// Session-only file drop box. Files are held in memory for the current session
+// and are NOT uploaded or persisted.
+function FileDropField() {
+  const [files, setFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    setFiles((prev) => [...prev, ...Array.from(list)]);
+  };
+
+  const removeFile = (idx: number) => {
+    setFiles((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label>Or Dump Files Here</Label>
+      <div
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          addFiles(e.dataTransfer.files);
+        }}
+        className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed p-6 text-center hover-elevate ${
+          isDragging ? 'border-primary' : 'border-border'
+        }`}
+        data-testid="dropzone-property-files"
+      >
+        <Upload className="h-5 w-5 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground">
+          Drag &amp; drop files here, or click to browse
+        </p>
+        <p className="text-xs text-muted-foreground">Held for this session only — not saved</p>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            addFiles(e.target.files);
+            e.target.value = '';
+          }}
+          data-testid="input-file-drop"
+        />
+      </div>
+      {files.length > 0 && (
+        <ul className="space-y-2">
+          {files.map((f, i) => (
+            <li
+              key={`${f.name}-${i}`}
+              className="flex items-center justify-between gap-2 rounded-md border p-2"
+              data-testid={`row-file-${i}`}
+            >
+              <div className="flex min-w-0 items-center gap-2">
+                <FileIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="truncate text-sm" data-testid={`text-file-name-${i}`}>
+                  {f.name}
+                </span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {formatBytes(f.size)}
+                </span>
+              </div>
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeFile(i);
+                }}
+                data-testid={`button-remove-file-${i}`}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -764,6 +865,7 @@ export default function FinalContractTermsTab({ data, onChange }: FinalContractT
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Property File Link" field="propertyFileLink" type="url" placeholder="https://..." {...ctx} />
+            <FileDropField />
           </div>
         </CardContent>
       </Card>
